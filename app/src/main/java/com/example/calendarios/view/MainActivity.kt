@@ -1,12 +1,22 @@
 package com.example.calendarios.view
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,8 +25,21 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,27 +54,34 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.calendarios.model.database.AppDatabase
+import com.example.calendarios.model.entity.Evento
+import com.example.calendarios.viewmodel.EventoViewModel
+import com.example.calendarios.viewmodel.EventoViewModelFactory
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.*
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
-    @RequiresApi(Build.VERSION_CODES.O)
+    private val eventoViewModel: EventoViewModel by viewModels {
+        val dao = AppDatabase.getDatabase(applicationContext).eventoDao()
+        EventoViewModelFactory(dao)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                AppNavigation()
+                AppNavigation(eventoViewModel)
             }
         }
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AppNavigation() {
+fun AppNavigation(eventoViewModel: EventoViewModel) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "calendarView") {
@@ -68,7 +98,8 @@ fun AppNavigation() {
                 onAddEvent = {
                     navController.navigate("addEvent/$date")
                 },
-                navController = navController
+                navController = navController,
+                eventoViewModel = eventoViewModel
             )
         }
         composable(
@@ -76,13 +107,12 @@ fun AppNavigation() {
             arguments = listOf(navArgument("date") { type = NavType.StringType })
         ) { backStackEntry ->
             val date = backStackEntry.arguments?.getString("date") ?: ""
-            AddEventScreen(date = date, navController = navController)
+            AddEventScreen(date = date, navController = navController, eventoViewModel = eventoViewModel)
         }
     }
 }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CalendarView(navController: NavController) {
     var currentYear by remember { mutableStateOf(LocalDate.now().year) }
@@ -148,7 +178,6 @@ fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CalendarMonthView(month: Month, year: Int, onDateSelected: (LocalDate) -> Unit) {
     val firstDayOfMonth = LocalDate.of(year, month, 1)
@@ -175,7 +204,6 @@ fun CalendarMonthView(month: Month, year: Int, onDateSelected: (LocalDate) -> Un
 }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DaysOfMonthGrid(
     firstDay: LocalDate,
@@ -233,11 +261,13 @@ fun DaysOfMonthGrid(
 
 
     @Composable
-    fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavController) {
+    fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavController, eventoViewModel: EventoViewModel) {
         val backgroundColor = Color(0xFF1C1C1C)
         val primaryColor = Color(0xFF3498DB)
         val textColor = Color.White
-        val mutedTextColor = Color(0xFFBDC3C7)
+
+        var listaEventos by eventoViewModel.listaEventos
+        eventoViewModel.buscarEventos(date)
 
         Column(
             modifier = Modifier
@@ -268,12 +298,8 @@ fun DaysOfMonthGrid(
             LazyColumn(
                 modifier = Modifier.weight(1f)
             ) {
-                items(listOf("Evento 1", "Evento 2", "Evento 3")) { event ->
-                    Text(
-                        text = event,
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge.copy(color = mutedTextColor)
-                    )
+                items(listaEventos) { event ->
+                    EventoView(event, eventoViewModel)
                 }
             }
         Box(
@@ -297,9 +323,8 @@ fun DaysOfMonthGrid(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEventScreen(date: String, navController: NavController) {
+fun AddEventScreen(date: String, navController: NavController, eventoViewModel: EventoViewModel) {
     val backgroundColor = Color(0xFF1C1C1C)
     val fieldBackgroundColor = Color(0xFF2C3E50)
     val primaryColor = Color(0xFF3498DB)
@@ -337,7 +362,7 @@ fun AddEventScreen(date: String, navController: NavController) {
         }
 
         Text(
-            text = "$formattedDate",
+            text = formattedDate,
             style = androidx.compose.ui.text.TextStyle(
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
@@ -346,7 +371,6 @@ fun AddEventScreen(date: String, navController: NavController) {
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Campo Título
         var title by remember { mutableStateOf("") }
         TextField(
             value = title,
@@ -410,11 +434,9 @@ fun AddEventScreen(date: String, navController: NavController) {
             shape = MaterialTheme.shapes.medium
         )
 
-        // Botão para salvar o evento
         Button(
             onClick = {
-                // Lógica para salvar o evento
-                // Pode adicionar lógica para salvar os dados aqui
+                eventoViewModel.salvarEvento(title, date, description)
 
                 navController.popBackStack()
             },
@@ -455,15 +477,47 @@ fun DaysOfWeekRow() {
 }
 
 
+@Composable
+fun EventoView(evento: Evento, eventoViewModel: EventoViewModel) {
+    val mutedTextColor = Color(0xFFBDC3C7)
+    val primaryColor = Color(0xFF3498DB)
+    Row (Modifier.clickable { /* TODO - Abrir Tela de Edição de Evento */ }) {
+        Text(
+            text = evento.nome,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyLarge.copy(color = mutedTextColor)
+        )
+        Text(
+            text = evento.descricao,
+            modifier = Modifier.padding(start = 16.dp),
+            style = MaterialTheme.typography.bodyMedium.copy(color = mutedTextColor)
+        )
+        Button(
+            onClick = {
+                eventoViewModel.deletarEvento(evento)
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = primaryColor
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Deletar Evento",
+                tint = Color.White
+            )
+        }
+    }
+
+}
+
 enum class Direction {
     FORWARD, BACKWARD
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    MaterialTheme {
-        AppNavigation()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun DefaultPreview() {
+//    MaterialTheme {
+//        AppNavigation()
+//    }
+//}

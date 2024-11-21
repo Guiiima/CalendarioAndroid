@@ -43,7 +43,6 @@ android {
         compose = true
     }
 }
-final val ROOM_VERSION = "2.6.1"
 dependencies {
     implementation(libs.androidx.room.runtime)
     annotationProcessor(libs.androidx.room.compiler)
