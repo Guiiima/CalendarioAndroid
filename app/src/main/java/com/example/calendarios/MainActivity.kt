@@ -76,7 +76,7 @@ fun AppNavigation() {
             arguments = listOf(navArgument("date") { type = NavType.StringType })
         ) { backStackEntry ->
             val date = backStackEntry.arguments?.getString("date") ?: ""
-            AddEventScreen(date)
+            AddEventScreen(date = date, navController = navController) // Passando o NavController
         }
     }
 }
@@ -226,7 +226,9 @@ fun DaysOfMonthGrid(
 
 @Composable
 fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavController) {
-    Column {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
         // Barra superior com botão de voltar
         Row(
             modifier = Modifier
@@ -250,9 +252,9 @@ fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavCon
             )
         }
 
-        // Conteúdo principal
+        // Lista de eventos
         LazyColumn(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.weight(1f) // Ocupa o espaço restante acima do botão
         ) {
             items(listOf("Evento 1", "Evento 2", "Evento 3")) { event ->
                 Text(
@@ -263,33 +265,93 @@ fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavCon
             }
         }
 
-        // Botão para adicionar eventos
-        FloatingActionButton(
-            onClick = onAddEvent,
+        // Botão flutuante para adicionar um evento
+        Box(
             modifier = Modifier
-                .align(Alignment.End)
-                .padding(16.dp)
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.BottomEnd
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Adicionar evento")
+            FloatingActionButton(
+                onClick = { onAddEvent() },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Adicionar evento",
+                    tint = Color.White
+                )
+            }
         }
     }
 }
 
 
+
 @Composable
-fun AddEventScreen(date: String) {
+fun AddEventScreen(date: String, navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Barra superior com botão de voltar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Voltar",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            Text(
+                text = "Adicionar Evento",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+
+        // Formulário para adicionar eventos
         Text(
-            text = "Adicionar evento para a data: $date",
-            style = MaterialTheme.typography.bodyMedium
+            text = "Data: $date",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
         )
-        Text("Formulário de evento aqui!")
+
+        // Campos do formulário (Exemplo simples)
+        TextField(
+            value = "",
+            onValueChange = { /* Atualize o valor do campo */ },
+            label = { Text("Título do Evento") },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+        )
+        TextField(
+            value = "",
+            onValueChange = { /* Atualize o valor do campo */ },
+            label = { Text("Descrição") },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+        )
+
+        // Botão para salvar o evento
+        Button(
+            onClick = {
+                // Lógica para salvar o evento
+                navController.popBackStack() // Volta para a tela de eventos
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Salvar Evento")
+        }
     }
 }
+
+
 
 @Composable
 fun DaysOfWeekRow() {
