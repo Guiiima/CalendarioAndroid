@@ -7,6 +7,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,14 +27,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -342,6 +348,7 @@ fun DaysOfMonthGrid(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEventScreen(
     date: String,
@@ -363,7 +370,15 @@ fun AddEventScreen(
     var nome by remember { mutableStateOf("") }
     var local by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
+    var categoria by remember { mutableStateOf("") }
     var isInitialized by remember { mutableStateOf(false) }
+
+    val categorias = listOf(
+        "Cultura", "Esporte", "Tecnologia", "Música", "Educação",
+        "Lazer", "Saúde", "Negócios", "Gastronomia", "Eventos Sociais",
+        "Desenvolvimento Pessoal", "Voluntariado", "Meio Ambiente", "Artes",
+        "Bem-estar", "Inovação"
+    )
 
     eventoId?.let { eventoViewModel.buscarEventoPorId(it) }
     val evento by eventoViewModel.evento
@@ -371,10 +386,13 @@ fun AddEventScreen(
         evento?.let {
             nome = it.nome
             descricao = it.descricao
+            categoria = it.categoria // Supondo que o evento tenha o campo categoria
         }
         isInitialized = true
     }
 
+    // Para controle do estado de visibilidade do dropdown
+    var expanded by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -402,6 +420,7 @@ fun AddEventScreen(
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
+
         if (formattedDate != null) {
             Text(
                 text = formattedDate,
@@ -413,6 +432,7 @@ fun AddEventScreen(
                 modifier = Modifier.padding(bottom = 24.dp)
             )
         }
+
         TextField(
             value = nome,
             onValueChange = { nome = it },
@@ -457,7 +477,7 @@ fun AddEventScreen(
             label = { Text("Descrição", color = textColor) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp)
+                .padding(bottom = 16.dp)
                 .height(150.dp),
             maxLines = 5,
             colors = TextFieldDefaults.colors(
@@ -471,16 +491,70 @@ fun AddEventScreen(
             ),
             shape = MaterialTheme.shapes.medium
         )
+
+        // Menu de categorias com pesquisa
+        OutlinedTextField(
+            value = categoria,
+            onValueChange = { categoria = it },
+            label = { Text("Categoria", color = textColor) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            readOnly = true,
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Abrir menu de categorias",
+                    tint = textColor
+                )
+            },
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = primaryColor,
+                unfocusedBorderColor = Color.Transparent,
+                focusedLabelColor = textColor,
+                unfocusedLabelColor = textColor
+            )
+        )
+
+        // Dropdown para selecionar categoria
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            // Exibe o menu de categorias
+            val interactionSource = remember { MutableInteractionSource() }
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                categorias.forEach { categoriaOption ->
+                    DropdownMenuItem(
+                        onClick = {
+                            categoria = categoriaOption
+                            expanded = false
+                        }
+                    ) {
+                        Text(text = categoriaOption, color = textColor)
+                    }
+                }
+            }
+
+
+
+
+            }
+
         Button(
             onClick = {
                 if (eventoId != null) {
-                    val eventoAtualizado = evento?.copy(nome = nome, descricao = descricao)
+                    val eventoAtualizado = evento?.copy(nome = nome, descricao = descricao, categoria = categoria)
                     eventoAtualizado?.let {
                         eventoViewModel.atualizarEvento(it)
                         navController.popBackStack()
                     }
                 } else {
-                    eventoViewModel.salvarEvento(nome, date, descricao)
+                    eventoViewModel.salvarEvento(nome, date, descricao, categoria)
                     navController.popBackStack()
                 }
                 navController.popBackStack()
@@ -501,6 +575,7 @@ fun AddEventScreen(
         }
     }
 }
+
 @Composable
 fun DaysOfWeekRow() {
     val daysOfWeek = listOf("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb")

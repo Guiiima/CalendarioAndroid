@@ -20,12 +20,12 @@ class EventoViewModel(private val eventoDAO: EventoDAO): ViewModel() {
     }
 
     // Função para salvar um novo evento
-    fun salvarEvento(nome: String, data: String, descricao: String): String {
+    fun salvarEvento(nome: String, data: String, descricao: String, categoria: String): String {
         if (nome.isBlank()) {
             return "Preencha o nome do Evento!"
         }
 
-        val evento = Evento(id = 0, nome = nome, data = data, descricao = descricao)
+        val evento = Evento(id = 0, nome = nome, data = data, descricao = descricao, categoria = categoria)
 
         viewModelScope.launch {
             eventoDAO.inserir(evento)
