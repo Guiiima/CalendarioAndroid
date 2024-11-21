@@ -411,7 +411,6 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
             shape = MaterialTheme.shapes.medium
         )
 
-        // Campo Descrição
         var description by remember { mutableStateOf("") }
         TextField(
             value = description,
@@ -436,7 +435,7 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
 
         Button(
             onClick = {
-                eventoViewModel.salvarEvento(title, date, description)
+                eventoViewModel.salvarEvento(title, date, description, location)
 
                 navController.popBackStack()
             },
@@ -452,10 +451,6 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
         }
     }
 }
-
-
-
-
 
 @Composable
 fun DaysOfWeekRow() {
@@ -475,7 +470,6 @@ fun DaysOfWeekRow() {
         }
     }
 }
-
 
 @Composable
 fun EventoView(evento: Evento, eventoViewModel: EventoViewModel) {
