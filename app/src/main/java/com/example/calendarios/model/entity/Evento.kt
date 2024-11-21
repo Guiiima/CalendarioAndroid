@@ -10,7 +10,7 @@ data class Evento(
     var nome: String,
     var data: String,
     var descricao: String,
-    var local: String,
+    var categoria: String,
 //    var recorrente: Boolean,
 //    var categoria: Categoria,
 )
