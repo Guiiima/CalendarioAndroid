@@ -69,16 +69,15 @@ fun AppNavigation() {
                 onAddEvent = {
                     navController.navigate("addEvent/$date")
                 },
-                navController = navController // Passa o NavController
+                navController = navController
             )
         }
-
         composable(
             route = "addEvent/{date}",
             arguments = listOf(navArgument("date") { type = NavType.StringType })
         ) { backStackEntry ->
             val date = backStackEntry.arguments?.getString("date") ?: ""
-            AddEventScreen(date = date, navController = navController) // Passando o NavController
+            AddEventScreen(date = date, navController = navController)
         }
     }
 }
@@ -89,14 +88,13 @@ fun AppNavigation() {
 fun CalendarView(navController: NavController) {
     var currentYear by remember { mutableStateOf(LocalDate.now().year) }
     val monthsList = remember(currentYear) {
-        // Retorna todos os meses do ano, sem restrições
         Month.values().map { it to currentYear }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF2C2C2C)) // Alteração para fundo escuro
+            .background(Color(0xFF2C2C2C))
     ) {
         YearHeader(currentYear) { direction ->
             currentYear += if (direction == Direction.FORWARD) 1 else -1
@@ -116,24 +114,21 @@ fun CalendarView(navController: NavController) {
         }
     }
 }
-
-
-
 @Composable
 fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .background(Color(0xFF2C2C2C)), // Fundo escuro para o cabeçalho
+            .background(Color(0xFF2C2C2C)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
         IconButton(onClick = { onDirectionChange(Direction.BACKWARD) }) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Previous Year",
-                tint = Color.White // Setas brancas
+                contentDescription = "Ano Anterior",
+                tint = Color.White
             )
         }
 
@@ -147,8 +142,8 @@ fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
         IconButton(onClick = { onDirectionChange(Direction.FORWARD) }) {
             Icon(
                 imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Next Year",
-                tint = Color.White // Setas brancas
+                contentDescription = "Proximo Ano",
+                tint = Color.White
             )
         }
     }
@@ -164,20 +159,17 @@ fun CalendarMonthView(month: Month, year: Int, onDateSelected: (LocalDate) -> Un
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF484848), shape = RoundedCornerShape(12.dp)) // cor de fundo do calendário
+            .background(Color(0xFF484848), shape = RoundedCornerShape(12.dp))
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Mês e ano em branco e maiúsculo
         Text(
-            text = "${month.getDisplayName(TextStyle.FULL, Locale("pt", "BR")).toUpperCase()} $year", // Maiúsculo
+            text = "${month.getDisplayName(TextStyle.FULL, Locale("pt", "BR")).toUpperCase()} $year",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp),
-            color = Color.White // Cor do texto em branco
+            color = Color.White
         )
-
-        // A seguir, os outros componentes do calendário
         DaysOfWeekRow()
         DaysOfMonthGrid(firstDayOfMonth, lastDayOfMonth, currentDate, onDateSelected)
     }
@@ -192,11 +184,11 @@ fun DaysOfMonthGrid(
     currentDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit
 ) {
-    val firstDayOfWeek = firstDay.dayOfWeek.value % 7 // Alinhando domingo como 0
+    val firstDayOfWeek = firstDay.dayOfWeek.value % 7
     val totalDaysInMonth = lastDay.dayOfMonth
 
-    val totalCells = totalDaysInMonth + firstDayOfWeek // Inclui os dias "vazios" no início
-    val rows = (totalCells + 6) / 7 // Calcula o total de linhas necessárias
+    val totalCells = totalDaysInMonth + firstDayOfWeek
+    val rows = (totalCells + 6) / 7
 
     var day = 1
     Column {
@@ -208,7 +200,6 @@ fun DaysOfMonthGrid(
                 for (col in 0..6) {
                     val cellIndex = row * 7 + col
                     if (cellIndex < firstDayOfWeek || day > totalDaysInMonth) {
-                        // Renderiza espaços vazios para os dias fora do mês
                         Spacer(modifier = Modifier.size(45.dp))
                     } else {
                         val dayDate = LocalDate.of(firstDay.year, firstDay.month, day)
@@ -222,7 +213,7 @@ fun DaysOfMonthGrid(
                             shape = RoundedCornerShape(50),
                             contentPadding = PaddingValues(0.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isToday) Color(0x88EF5350) else Color(
+                                containerColor = if (isToday) Color(0xFF3498DB) else Color(
                                     0xFF605E5E
                                 )
                             ),
@@ -230,7 +221,7 @@ fun DaysOfMonthGrid(
                             Text(
                                 text = "$day",
                                 fontSize = 13.sp,
-                                color = Color.White // Cor do texto do dia
+                                color = Color.White
                             )
                         }
                         day++
@@ -244,22 +235,20 @@ fun DaysOfMonthGrid(
 
     @Composable
     fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavController) {
-        // Definindo cores para o tema com tons de preto e azul claro
-        val backgroundColor = Color(0xFF1C1C1C) // Fundo preto
-        val primaryColor = Color(0xFF3498DB) // Azul claro
-        val textColor = Color.White // Cor de texto branca
-        val mutedTextColor = Color(0xFFBDC3C7) // Cor para texto mais suave
+        val backgroundColor = Color(0xFF1C1C1C)
+        val primaryColor = Color(0xFF3498DB)
+        val textColor = Color.White
+        val mutedTextColor = Color(0xFFBDC3C7)
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(backgroundColor) // Cor de fundo preta para toda a tela
+                .background(backgroundColor)
         ) {
-            // Barra superior com botão de voltar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF2C3E50)) // Azul escuro para a barra superior
+                    .background(Color(0xFF2C3E50))
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -267,31 +256,27 @@ fun DaysOfMonthGrid(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Voltar",
-                        tint = primaryColor // Azul claro para o ícone
+                        tint = primaryColor
                     )
                 }
                 Text(
                     text = "Eventos - $date",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.padding(start = 8.dp),
-                    color = textColor // Texto branco para maior contraste
+                    color = textColor
                 )
             }
-
-            // Lista de eventos
             LazyColumn(
-                modifier = Modifier.weight(1f) // Ocupa o espaço restante acima do botão
+                modifier = Modifier.weight(1f)
             ) {
                 items(listOf("Evento 1", "Evento 2", "Evento 3")) { event ->
                     Text(
                         text = event,
                         modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge.copy(color = mutedTextColor) // Texto suave para os itens
+                        style = MaterialTheme.typography.bodyLarge.copy(color = mutedTextColor)
                     )
                 }
             }
-
-        // Botão flutuante para adicionar um evento
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -300,12 +285,12 @@ fun DaysOfMonthGrid(
         ) {
             FloatingActionButton(
                 onClick = { onAddEvent() },
-                containerColor = primaryColor // Azul claro para o botão flutuante
+                containerColor = primaryColor
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Adicionar evento",
-                    tint = Color.White // Ícone branco
+                    tint = Color.White
                 )
             }
         }
@@ -316,20 +301,21 @@ fun DaysOfMonthGrid(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEventScreen(date: String, navController: NavController) {
-    // Definindo cores para o tema com tons de preto e azul claro
-    val backgroundColor = Color(0xFF1C1C1C) // Fundo preto
-    val fieldBackgroundColor = Color(0xFF2C3E50) // Cor de fundo do campo de texto (azul escuro)
-    val primaryColor = Color(0xFF3498DB) // Azul claro
-    val textColor = Color.White // Cor de texto branca
-    val mutedTextColor = Color(0xFFBDC3C7) // Cor para texto mais suave
+    val backgroundColor = Color(0xFF1C1C1C)
+    val fieldBackgroundColor = Color(0xFF2C3E50)
+    val primaryColor = Color(0xFF3498DB)
+    val textColor = Color.White
+    val mutedTextColor = Color(0xFFBDC3C7)
+    val formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale("pt", "BR"))
+    val formattedDate = LocalDate.parse(date).format(formatter)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor) // Cor de fundo preta para toda a tela
+            .background(backgroundColor)
             .padding(16.dp)
     ) {
-        // Barra superior com botão de voltar
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -351,9 +337,8 @@ fun AddEventScreen(date: String, navController: NavController) {
             )
         }
 
-        // Exibindo a data de forma mais destacada e bonita
         Text(
-            text = "Data Agendada: $date",
+            text = "$formattedDate",
             style = androidx.compose.ui.text.TextStyle(
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
@@ -372,18 +357,17 @@ fun AddEventScreen(date: String, navController: NavController) {
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = fieldBackgroundColor, // Cor de fundo quando em foco
-                unfocusedContainerColor = fieldBackgroundColor, // Cor de fundo quando não está em foco
-                disabledContainerColor = fieldBackgroundColor, // Cor de fundo quando desabilitado
-                focusedIndicatorColor = primaryColor, // Cor do indicador de foco
-                unfocusedIndicatorColor = mutedTextColor, // Cor do indicador sem foco
-                focusedLabelColor = primaryColor, // Cor do rótulo quando em foco
-                unfocusedLabelColor = mutedTextColor // Cor do rótulo sem foco
+                focusedContainerColor = fieldBackgroundColor,
+                unfocusedContainerColor = fieldBackgroundColor,
+                disabledContainerColor = fieldBackgroundColor,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedLabelColor = primaryColor,
+                unfocusedLabelColor = mutedTextColor
             ),
             shape = MaterialTheme.shapes.medium
         )
 
-        // Campo Local
         var location by remember { mutableStateOf("") }
         TextField(
             value = location,
@@ -396,8 +380,8 @@ fun AddEventScreen(date: String, navController: NavController) {
                 focusedContainerColor = fieldBackgroundColor,
                 unfocusedContainerColor = fieldBackgroundColor,
                 disabledContainerColor = fieldBackgroundColor,
-                focusedIndicatorColor = primaryColor,
-                unfocusedIndicatorColor = mutedTextColor,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
                 focusedLabelColor = primaryColor,
                 unfocusedLabelColor = mutedTextColor
             ),
@@ -413,14 +397,14 @@ fun AddEventScreen(date: String, navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 24.dp)
-                .height(150.dp), // Deixa o campo de descrição maior
+                .height(150.dp),
             maxLines = 5,
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = fieldBackgroundColor,
                 unfocusedContainerColor = fieldBackgroundColor,
                 disabledContainerColor = fieldBackgroundColor,
-                focusedIndicatorColor = primaryColor,
-                unfocusedIndicatorColor = mutedTextColor,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
                 focusedLabelColor = primaryColor,
                 unfocusedLabelColor = mutedTextColor
             ),
@@ -433,7 +417,7 @@ fun AddEventScreen(date: String, navController: NavController) {
                 // Lógica para salvar o evento
                 // Pode adicionar lógica para salvar os dados aqui
 
-                navController.popBackStack() // Volta para a tela de eventos
+                navController.popBackStack()
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -452,7 +436,6 @@ fun AddEventScreen(date: String, navController: NavController) {
 
 
 
-
 @Composable
 fun DaysOfWeekRow() {
     val daysOfWeek = listOf("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb")
@@ -466,7 +449,7 @@ fun DaysOfWeekRow() {
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFB0BEC5) // Cor cinza escuro para os dias da semana
+                color = Color(0xFFB0BEC5)
             )
         }
     }
