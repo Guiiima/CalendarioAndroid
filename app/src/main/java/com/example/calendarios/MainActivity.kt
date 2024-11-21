@@ -164,22 +164,25 @@ fun CalendarMonthView(month: Month, year: Int, onDateSelected: (LocalDate) -> Un
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp))
+            .background(Color(0xFF484848), shape = RoundedCornerShape(12.dp)) // cor de fundo do calendário
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Mês e ano em branco e maiúsculo
         Text(
-            text = "${month.getDisplayName(TextStyle.FULL, Locale("pt", "BR"))} $year",
-            fontSize = 20.sp,
+            text = "${month.getDisplayName(TextStyle.FULL, Locale("pt", "BR")).toUpperCase()} $year", // Maiúsculo
+            fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp),
-            color = Color(0xFF455A64)
+            color = Color.White // Cor do texto em branco
         )
 
+        // A seguir, os outros componentes do calendário
         DaysOfWeekRow()
         DaysOfMonthGrid(firstDayOfMonth, lastDayOfMonth, currentDate, onDateSelected)
     }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -210,24 +213,24 @@ fun DaysOfMonthGrid(
                     } else {
                         val dayDate = LocalDate.of(firstDay.year, firstDay.month, day)
                         val isToday = dayDate == currentDate
-                        val isDisabled = dayDate.isBefore(currentDate)
 
                         Button(
-                            onClick = { if (!isDisabled) onDateSelected(dayDate) },
+                            onClick = { onDateSelected(dayDate) },
                             modifier = Modifier
                                 .padding(5.dp)
                                 .size(35.dp),
                             shape = RoundedCornerShape(50),
                             contentPadding = PaddingValues(0.dp),
-                            enabled = !isDisabled,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isToday) Color(0xFF80C8FF) else Color(0xFFB0BEC5) // Cor padrão
-                            )
+                                containerColor = if (isToday) Color(0x88EF5350) else Color(
+                                    0xFF605E5E
+                                )
+                            ),
                         ) {
                             Text(
                                 text = "$day",
                                 fontSize = 13.sp,
-                                color = if (isToday) Color.White else Color(0xFF263238)
+                                color = Color.White // Cor do texto do dia
                             )
                         }
                         day++
@@ -462,11 +465,13 @@ fun DaysOfWeekRow() {
                 text = day,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFB0BEC5) // Cor cinza escuro para os dias da semana
             )
         }
     }
 }
+
 
 enum class Direction {
     FORWARD, BACKWARD
