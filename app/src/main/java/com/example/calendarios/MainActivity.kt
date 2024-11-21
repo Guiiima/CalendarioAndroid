@@ -14,6 +14,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -81,6 +83,7 @@ fun AppNavigation() {
     }
 }
 
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CalendarView(navController: NavController) {
@@ -90,7 +93,11 @@ fun CalendarView(navController: NavController) {
         Month.values().map { it to currentYear }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF2C2C2C)) // Alteração para fundo escuro
+    ) {
         YearHeader(currentYear) { direction ->
             currentYear += if (direction == Direction.FORWARD) 1 else -1
         }
@@ -111,30 +118,38 @@ fun CalendarView(navController: NavController) {
 }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
-fun YearHeader(currentYear: Int, onYearChanged: (Direction) -> Unit) {
+fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .background(Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp))
-            .height(56.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .background(Color(0xFF2C2C2C)), // Fundo escuro para o cabeçalho
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
-        IconButton(onClick = { onYearChanged(Direction.BACKWARD) }) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+        IconButton(onClick = { onDirectionChange(Direction.BACKWARD) }) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Previous Year",
+                tint = Color.White // Setas brancas
+            )
         }
 
         Text(
             text = "$currentYear",
+            color = Color.White,
             style = MaterialTheme.typography.titleLarge,
-            color = Color(0xFF455A64)
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        IconButton(onClick = { onYearChanged(Direction.FORWARD) }) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Avançar")
+        IconButton(onClick = { onDirectionChange(Direction.FORWARD) }) {
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = "Next Year",
+                tint = Color.White // Setas brancas
+            )
         }
     }
 }
@@ -224,46 +239,54 @@ fun DaysOfMonthGrid(
 }
 
 
-@Composable
-fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavController) {
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Barra superior com botão de voltar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFF5F5F5))
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Voltar",
-                    tint = Color(0xFF455A64)
-                )
-            }
-            Text(
-                text = "Eventos - $date",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 8.dp),
-                color = Color(0xFF455A64)
-            )
-        }
+    @Composable
+    fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavController) {
+        // Definindo cores para o tema com tons de preto e azul claro
+        val backgroundColor = Color(0xFF1C1C1C) // Fundo preto
+        val primaryColor = Color(0xFF3498DB) // Azul claro
+        val textColor = Color.White // Cor de texto branca
+        val mutedTextColor = Color(0xFFBDC3C7) // Cor para texto mais suave
 
-        // Lista de eventos
-        LazyColumn(
-            modifier = Modifier.weight(1f) // Ocupa o espaço restante acima do botão
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(backgroundColor) // Cor de fundo preta para toda a tela
         ) {
-            items(listOf("Evento 1", "Evento 2", "Evento 3")) { event ->
+            // Barra superior com botão de voltar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF2C3E50)) // Azul escuro para a barra superior
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Voltar",
+                        tint = primaryColor // Azul claro para o ícone
+                    )
+                }
                 Text(
-                    text = event,
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyLarge
+                    text = "Eventos - $date",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(start = 8.dp),
+                    color = textColor // Texto branco para maior contraste
                 )
             }
-        }
+
+            // Lista de eventos
+            LazyColumn(
+                modifier = Modifier.weight(1f) // Ocupa o espaço restante acima do botão
+            ) {
+                items(listOf("Evento 1", "Evento 2", "Evento 3")) { event ->
+                    Text(
+                        text = event,
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyLarge.copy(color = mutedTextColor) // Texto suave para os itens
+                    )
+                }
+            }
 
         // Botão flutuante para adicionar um evento
         Box(
@@ -274,12 +297,12 @@ fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavCon
         ) {
             FloatingActionButton(
                 onClick = { onAddEvent() },
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = primaryColor // Azul claro para o botão flutuante
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Adicionar evento",
-                    tint = Color.White
+                    tint = Color.White // Ícone branco
                 )
             }
         }
@@ -287,12 +310,20 @@ fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavCon
 }
 
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEventScreen(date: String, navController: NavController) {
+    // Definindo cores para o tema com tons de preto e azul claro
+    val backgroundColor = Color(0xFF1C1C1C) // Fundo preto
+    val fieldBackgroundColor = Color(0xFF2C3E50) // Cor de fundo do campo de texto (azul escuro)
+    val primaryColor = Color(0xFF3498DB) // Azul claro
+    val textColor = Color.White // Cor de texto branca
+    val mutedTextColor = Color(0xFFBDC3C7) // Cor para texto mais suave
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(backgroundColor) // Cor de fundo preta para toda a tela
             .padding(16.dp)
     ) {
         // Barra superior com botão de voltar
@@ -306,50 +337,116 @@ fun AddEventScreen(date: String, navController: NavController) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Voltar",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = primaryColor
                 )
             }
             Text(
                 text = "Adicionar Evento",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = textColor,
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
 
-        // Formulário para adicionar eventos
+        // Exibindo a data de forma mais destacada e bonita
         Text(
-            text = "Data: $date",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
+            text = "Data Agendada: $date",
+            style = androidx.compose.ui.text.TextStyle(
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = primaryColor
+            ),
+            modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Campos do formulário (Exemplo simples)
+        // Campo Título
+        var title by remember { mutableStateOf("") }
         TextField(
-            value = "",
-            onValueChange = { /* Atualize o valor do campo */ },
-            label = { Text("Título do Evento") },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Título do Evento", color = mutedTextColor) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = fieldBackgroundColor, // Cor de fundo quando em foco
+                unfocusedContainerColor = fieldBackgroundColor, // Cor de fundo quando não está em foco
+                disabledContainerColor = fieldBackgroundColor, // Cor de fundo quando desabilitado
+                focusedIndicatorColor = primaryColor, // Cor do indicador de foco
+                unfocusedIndicatorColor = mutedTextColor, // Cor do indicador sem foco
+                focusedLabelColor = primaryColor, // Cor do rótulo quando em foco
+                unfocusedLabelColor = mutedTextColor // Cor do rótulo sem foco
+            ),
+            shape = MaterialTheme.shapes.medium
         )
+
+        // Campo Local
+        var location by remember { mutableStateOf("") }
         TextField(
-            value = "",
-            onValueChange = { /* Atualize o valor do campo */ },
-            label = { Text("Descrição") },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            value = location,
+            onValueChange = { location = it },
+            label = { Text("Local", color = mutedTextColor) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = fieldBackgroundColor,
+                unfocusedContainerColor = fieldBackgroundColor,
+                disabledContainerColor = fieldBackgroundColor,
+                focusedIndicatorColor = primaryColor,
+                unfocusedIndicatorColor = mutedTextColor,
+                focusedLabelColor = primaryColor,
+                unfocusedLabelColor = mutedTextColor
+            ),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        // Campo Descrição
+        var description by remember { mutableStateOf("") }
+        TextField(
+            value = description,
+            onValueChange = { description = it },
+            label = { Text("Descrição", color = mutedTextColor) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
+                .height(150.dp), // Deixa o campo de descrição maior
+            maxLines = 5,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = fieldBackgroundColor,
+                unfocusedContainerColor = fieldBackgroundColor,
+                disabledContainerColor = fieldBackgroundColor,
+                focusedIndicatorColor = primaryColor,
+                unfocusedIndicatorColor = mutedTextColor,
+                focusedLabelColor = primaryColor,
+                unfocusedLabelColor = mutedTextColor
+            ),
+            shape = MaterialTheme.shapes.medium
         )
 
         // Botão para salvar o evento
         Button(
             onClick = {
                 // Lógica para salvar o evento
+                // Pode adicionar lógica para salvar os dados aqui
+
                 navController.popBackStack() // Volta para a tela de eventos
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = primaryColor
+            ),
+            shape = MaterialTheme.shapes.large
         ) {
-            Text("Salvar Evento")
+            Text("Salvar Evento", color = Color.White, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
         }
     }
 }
+
+
+
 
 
 
