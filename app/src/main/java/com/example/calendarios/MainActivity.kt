@@ -2,10 +2,8 @@ package com.example.calendarios
 
 import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,29 +13,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.DateTimeFormatter
@@ -50,74 +42,78 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                CalendarView()
+                AppNavigation()
             }
         }
     }
 }
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun CalendarView() {
-    var currentMonth by remember { mutableStateOf(LocalDate.now().month) }
-    var currentYear by remember { mutableStateOf(LocalDate.now().year) }
-    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+fun AppNavigation() {
+    val navController = rememberNavController()
 
-    // A lista de meses precisa ser recalculada com base no ano e mês atuais
-    val monthsList = remember(currentYear) {
-        val list = mutableListOf<Pair<Month, Int>>()
-        // Preenche a lista com meses a partir do mês atual no ano atual
-        if (currentYear == LocalDate.now().year) {
-            for (month in Month.values()) {
-                if (month.ordinal >= LocalDate.now().monthValue - 1) {
-                    list.add(month to currentYear)
-                }
-            }
-        } else {
-            for (month in Month.values()) {
-                list.add(month to currentYear)
-            }
+    NavHost(navController = navController, startDestination = "calendarView") {
+        composable("calendarView") {
+            CalendarView(navController)
         }
-        list
+        composable(
+            route = "eventsList/{date}",
+            arguments = listOf(navArgument("date") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val date = backStackEntry.arguments?.getString("date").orEmpty()
+            EventsListScreen(
+                date = date,
+                onAddEvent = {
+                    navController.navigate("addEvent/$date")
+                },
+                navController = navController // Passa o NavController
+            )
+        }
+
+        composable(
+            route = "addEvent/{date}",
+            arguments = listOf(navArgument("date") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val date = backStackEntry.arguments?.getString("date") ?: ""
+            AddEventScreen(date)
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun CalendarView(navController: NavController) {
+    var currentYear by remember { mutableStateOf(LocalDate.now().year) }
+    val monthsList = remember(currentYear) {
+        // Retorna todos os meses do ano, sem restrições
+        Month.values().map { it to currentYear }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Cabeçalho fixo para a navegação entre os anos
-        YearHeader(currentYear, currentMonth) { direction ->
-            if (direction == Direction.FORWARD) {
-                currentYear++
-            } else if (direction == Direction.BACKWARD && currentYear > LocalDate.now().year) {
-                currentYear--
-            }
+    Column(modifier = Modifier.fillMaxSize()) {
+        YearHeader(currentYear) { direction ->
+            currentYear += if (direction == Direction.FORWARD) 1 else -1
         }
 
-        // LazyColumn para a rolagem da lista de meses
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            contentPadding = PaddingValues(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(monthsList) { (month, year) ->
-                CalendarMonthView(month, year) { date ->
-                    // Atualiza o estado da data selecionada
-                    selectedDate = date
+                CalendarMonthView(month, year) { selectedDate ->
+                    navController.navigate("eventsList/${selectedDate.toString()}")
                 }
             }
         }
     }
-
-    // Exibe a data selecionada (somente para fins de teste)
-    if (selectedDate != null) {
-        showSelectedDate(selectedDate!!)
-    }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun YearHeader(currentYear: Int, currentMonth: Month, onYearChanged: (Direction) -> Unit) {
+fun YearHeader(currentYear: Int, onYearChanged: (Direction) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -127,10 +123,7 @@ fun YearHeader(currentYear: Int, currentMonth: Month, onYearChanged: (Direction)
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
-            onClick = { onYearChanged(Direction.BACKWARD) },
-            modifier = Modifier.size(40.dp)
-        ) {
+        IconButton(onClick = { onYearChanged(Direction.BACKWARD) }) {
             Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
         }
 
@@ -140,10 +133,7 @@ fun YearHeader(currentYear: Int, currentMonth: Month, onYearChanged: (Direction)
             color = Color(0xFF455A64)
         )
 
-        IconButton(
-            onClick = { onYearChanged(Direction.FORWARD) },
-            modifier = Modifier.size(40.dp)
-        ) {
+        IconButton(onClick = { onYearChanged(Direction.FORWARD) }) {
             Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Avançar")
         }
     }
@@ -184,47 +174,49 @@ fun DaysOfMonthGrid(
     currentDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit
 ) {
-    val firstDayOfWeek = firstDay.dayOfWeek.value % 7
+    val firstDayOfWeek = firstDay.dayOfWeek.value % 7 // Alinhando domingo como 0
     val totalDaysInMonth = lastDay.dayOfMonth
 
-    var day = 1
-    for (i in 0 until (totalDaysInMonth + firstDayOfWeek + 6) / 7) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            for (j in 0..6) {
-                if (i == 0 && j < firstDayOfWeek || day > totalDaysInMonth) {
-                    Spacer(modifier = Modifier.size(45.dp))
-                } else {
-                    val dayDate = LocalDate.of(firstDay.year, firstDay.month, day)
-                    val isToday = dayDate == currentDate
-                    val isDisabled = dayDate.isBefore(currentDate)
+    val totalCells = totalDaysInMonth + firstDayOfWeek // Inclui os dias "vazios" no início
+    val rows = (totalCells + 6) / 7 // Calcula o total de linhas necessárias
 
-                    Button(
-                        onClick = {
-                            if (!isDisabled) onDateSelected(dayDate)
-                        },
-                        modifier = Modifier
-                            .padding(5.dp)
-                            .size(35.dp),
-                        shape = RoundedCornerShape(50),
-                        contentPadding = PaddingValues(0.dp),
-                        enabled = !isDisabled,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = when {
-                                isToday -> Color(0xFF80C8FF) // Cor para o dia de hoje
-                                else -> Color(0xFFB0BEC5) // Cor padrão
-                            }
-                        )
-                    ) {
-                        Text(
-                            text = "$day",
-                            fontSize = 13.sp,
-                            color = if (isToday) Color.White else Color(0xFF263238)
-                        )
+    var day = 1
+    Column {
+        for (row in 0 until rows) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                for (col in 0..6) {
+                    val cellIndex = row * 7 + col
+                    if (cellIndex < firstDayOfWeek || day > totalDaysInMonth) {
+                        // Renderiza espaços vazios para os dias fora do mês
+                        Spacer(modifier = Modifier.size(45.dp))
+                    } else {
+                        val dayDate = LocalDate.of(firstDay.year, firstDay.month, day)
+                        val isToday = dayDate == currentDate
+                        val isDisabled = dayDate.isBefore(currentDate)
+
+                        Button(
+                            onClick = { if (!isDisabled) onDateSelected(dayDate) },
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .size(35.dp),
+                            shape = RoundedCornerShape(50),
+                            contentPadding = PaddingValues(0.dp),
+                            enabled = !isDisabled,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isToday) Color(0xFF80C8FF) else Color(0xFFB0BEC5) // Cor padrão
+                            )
+                        ) {
+                            Text(
+                                text = "$day",
+                                fontSize = 13.sp,
+                                color = if (isToday) Color.White else Color(0xFF263238)
+                            )
+                        }
+                        day++
                     }
-                    day++
                 }
             }
         }
@@ -232,53 +224,100 @@ fun DaysOfMonthGrid(
 }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun showSelectedDate(date: LocalDate) {
-    Text(
-        text = "Data selecionada: ${date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale("pt", "BR")))}",
-        style = MaterialTheme.typography.bodySmall
-    )
+fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavController) {
+    Column {
+        // Barra superior com botão de voltar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF5F5F5))
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Voltar",
+                    tint = Color(0xFF455A64)
+                )
+            }
+            Text(
+                text = "Eventos - $date",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 8.dp),
+                color = Color(0xFF455A64)
+            )
+        }
+
+        // Conteúdo principal
+        LazyColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(listOf("Evento 1", "Evento 2", "Evento 3")) { event ->
+                Text(
+                    text = event,
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        }
+
+        // Botão para adicionar eventos
+        FloatingActionButton(
+            onClick = onAddEvent,
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Adicionar evento")
+        }
+    }
+}
+
+
+@Composable
+fun AddEventScreen(date: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Adicionar evento para a data: $date",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text("Formulário de evento aqui!")
+    }
+}
+
+@Composable
+fun DaysOfWeekRow() {
+    val daysOfWeek = listOf("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb")
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        daysOfWeek.forEach { day ->
+            Text(
+                text = day,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
 }
 
 enum class Direction {
     FORWARD, BACKWARD
 }
 
-@Composable
-fun DaysOfWeekRow() {
-    // Lista de dias da semana em português
-    val diasSemana = listOf("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb")
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        diasSemana.forEach { dia ->
-            Text(
-                text = dia,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .weight(1f),
-                style = customBody14.copy(fontWeight = FontWeight.Bold),
-                textAlign = TextAlign.Center,
-                color = Color(0xFF607D8B) // Tom suave de cinza azulado
-            )
-        }
-    }
-}
-
-val customBody14 = androidx.compose.ui.text.TextStyle(
-    fontSize = 14.sp,
-    fontWeight = FontWeight.Normal,
-    color = Color(0xFFB0BEC5) // Tom suave de cinza
-)
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     MaterialTheme {
-        CalendarView()
+        AppNavigation()
     }
 }
