@@ -595,7 +595,6 @@ fun DaysOfWeekRow() {
     }
 }
 
-
 @Composable
 fun EventoView(evento: Evento, eventoViewModel: EventoViewModel, navController: NavController) {
     val mutedTextColor = Color(0xFFBDC3C7)
