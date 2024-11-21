@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -109,8 +113,23 @@ fun AppNavigation(eventoViewModel: EventoViewModel) {
             val date = backStackEntry.arguments?.getString("date") ?: ""
             AddEventScreen(date = date, navController = navController, eventoViewModel = eventoViewModel)
         }
+        composable(
+            route = "editar_evento/{eventoId}",
+            arguments = listOf(navArgument("eventoId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val eventoId = backStackEntry.arguments?.getInt("eventoId")
+            if (eventoId != null) {
+                AddEventScreen(
+                    date = null.toString(),
+                    navController = navController,
+                    eventoViewModel = eventoViewModel,
+                    eventoId = eventoId
+                )
+            }
+        }
     }
 }
+
 
 
 @Composable
@@ -299,7 +318,7 @@ fun DaysOfMonthGrid(
                 modifier = Modifier.weight(1f)
             ) {
                 items(listaEventos) { event ->
-                    EventoView(event, eventoViewModel)
+                    EventoView(evento = event, eventoViewModel = eventoViewModel, navController = navController)
                 }
             }
         Box(
@@ -324,13 +343,38 @@ fun DaysOfMonthGrid(
 
 
 @Composable
-fun AddEventScreen(date: String, navController: NavController, eventoViewModel: EventoViewModel) {
+fun AddEventScreen(
+    date: String,
+    navController: NavController,
+    eventoViewModel: EventoViewModel,
+    eventoId: Int? = null
+) {
     val backgroundColor = Color(0xFF1C1C1C)
     val fieldBackgroundColor = Color(0xFF2C3E50)
     val primaryColor = Color(0xFF3498DB)
     val textColor = Color.White
     val formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale("pt", "BR"))
-    val formattedDate = LocalDate.parse(date).format(formatter)
+
+    val formattedDate = if (date != "null") {
+        LocalDate.parse(date).format(formatter)
+    } else {
+        "Data não disponível"
+    }
+    var nome by remember { mutableStateOf("") }
+    var local by remember { mutableStateOf("") }
+    var descricao by remember { mutableStateOf("") }
+    var isInitialized by remember { mutableStateOf(false) }
+
+    eventoId?.let { eventoViewModel.buscarEventoPorId(it) }
+    val evento by eventoViewModel.evento
+    if (evento != null && !isInitialized) {
+        evento?.let {
+            nome = it.nome
+            descricao = it.descricao
+        }
+        isInitialized = true
+    }
+
 
     Column(
         modifier = Modifier
@@ -352,27 +396,26 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
                 )
             }
             Text(
-                text = "Adicionar Evento",
+                text = if (eventoId != null) "Editar Evento" else "Adicionar Evento",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = textColor,
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
-
-        Text(
-            text = formattedDate,
-            style = androidx.compose.ui.text.TextStyle(
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                color = textColor
-            ),
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        var title by remember { mutableStateOf("") }
+        if (formattedDate != null) {
+            Text(
+                text = formattedDate,
+                style = androidx.compose.ui.text.TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = textColor
+                ),
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+        }
         TextField(
-            value = title,
-            onValueChange = { title = it },
+            value = nome,
+            onValueChange = { nome = it },
             label = { Text("Título do Evento", color = textColor) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -385,16 +428,13 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedLabelColor = textColor,
                 unfocusedLabelColor = textColor
-
             ),
             shape = MaterialTheme.shapes.medium
         )
 
-
-        var location by remember { mutableStateOf("") }
         TextField(
-            value = location,
-            onValueChange = { location = it },
+            value = local,
+            onValueChange = { local = it },
             label = { Text("Local", color = textColor) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -406,15 +446,14 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedLabelColor = textColor,
-                unfocusedLabelColor = textColor,
+                unfocusedLabelColor = textColor
             ),
             shape = MaterialTheme.shapes.medium
         )
 
-        var description by remember { mutableStateOf("") }
         TextField(
-            value = description,
-            onValueChange = { description = it },
+            value = descricao,
+            onValueChange = { descricao = it },
             label = { Text("Descrição", color = textColor) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -432,10 +471,18 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
             ),
             shape = MaterialTheme.shapes.medium
         )
-
         Button(
             onClick = {
-                eventoViewModel.salvarEvento(title, date, description)
+                if (eventoId != null) {
+                    val eventoAtualizado = evento?.copy(nome = nome, descricao = descricao)
+                    eventoAtualizado?.let {
+                        eventoViewModel.atualizarEvento(it)
+                        navController.popBackStack()
+                    }
+                } else {
+                    eventoViewModel.salvarEvento(nome, date, descricao)
+                    navController.popBackStack()
+                }
                 navController.popBackStack()
             },
             modifier = Modifier
@@ -447,19 +494,13 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
             shape = MaterialTheme.shapes.large
         ) {
             Text(
-                "Salvar Evento",
+                if (eventoId != null) "Atualizar Evento" else "Salvar Evento",
                 color = textColor,
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
             )
         }
     }
 }
-
-
-
-
-
-
 @Composable
 fun DaysOfWeekRow() {
     val daysOfWeek = listOf("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb")
@@ -481,14 +522,21 @@ fun DaysOfWeekRow() {
 
 
 @Composable
-fun EventoView(evento: Evento, eventoViewModel: EventoViewModel) {
+fun EventoView(evento: Evento, eventoViewModel: EventoViewModel, navController: NavController) {
     val mutedTextColor = Color(0xFFBDC3C7)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable { /* TODO - Abrir Tela de Edição de Evento */ },
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        navController.navigate("editar_evento/${evento.id}")
+
+                    }
+                )
+            },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -502,8 +550,13 @@ fun EventoView(evento: Evento, eventoViewModel: EventoViewModel) {
                 style = MaterialTheme.typography.bodyMedium.copy(color = mutedTextColor)
             )
         }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
         IconButton(
-            onClick = { eventoViewModel.deletarEvento(evento) },
+            onClick = {
+                eventoViewModel.deletarEvento(evento)
+            },
             modifier = Modifier.padding(4.dp)
         ) {
             Icon(
@@ -514,6 +567,8 @@ fun EventoView(evento: Evento, eventoViewModel: EventoViewModel) {
         }
     }
 }
+
+
 
 enum class Direction {
     FORWARD, BACKWARD
