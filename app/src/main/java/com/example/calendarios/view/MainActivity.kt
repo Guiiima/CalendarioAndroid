@@ -329,7 +329,6 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
     val fieldBackgroundColor = Color(0xFF2C3E50)
     val primaryColor = Color(0xFF3498DB)
     val textColor = Color.White
-    val mutedTextColor = Color(0xFFBDC3C7)
     val formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale("pt", "BR"))
     val formattedDate = LocalDate.parse(date).format(formatter)
 
@@ -339,7 +338,6 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
             .background(backgroundColor)
             .padding(16.dp)
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -366,7 +364,7 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
             style = androidx.compose.ui.text.TextStyle(
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
-                color = primaryColor
+                color = textColor
             ),
             modifier = Modifier.padding(bottom = 24.dp)
         )
@@ -375,7 +373,7 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
         TextField(
             value = title,
             onValueChange = { title = it },
-            label = { Text("Título do Evento", color = mutedTextColor) },
+            label = { Text("Título do Evento", color = textColor) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
@@ -385,17 +383,19 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
                 disabledContainerColor = fieldBackgroundColor,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                focusedLabelColor = primaryColor,
-                unfocusedLabelColor = mutedTextColor
+                focusedLabelColor = textColor,
+                unfocusedLabelColor = textColor
+
             ),
             shape = MaterialTheme.shapes.medium
         )
+
 
         var location by remember { mutableStateOf("") }
         TextField(
             value = location,
             onValueChange = { location = it },
-            label = { Text("Local", color = mutedTextColor) },
+            label = { Text("Local", color = textColor) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
@@ -405,18 +405,17 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
                 disabledContainerColor = fieldBackgroundColor,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                focusedLabelColor = primaryColor,
-                unfocusedLabelColor = mutedTextColor
+                focusedLabelColor = textColor,
+                unfocusedLabelColor = textColor,
             ),
             shape = MaterialTheme.shapes.medium
         )
 
-        // Campo Descrição
         var description by remember { mutableStateOf("") }
         TextField(
             value = description,
             onValueChange = { description = it },
-            label = { Text("Descrição", color = mutedTextColor) },
+            label = { Text("Descrição", color = textColor) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 24.dp)
@@ -428,8 +427,8 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
                 disabledContainerColor = fieldBackgroundColor,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                focusedLabelColor = primaryColor,
-                unfocusedLabelColor = mutedTextColor
+                focusedLabelColor = textColor,
+                unfocusedLabelColor = textColor
             ),
             shape = MaterialTheme.shapes.medium
         )
@@ -437,7 +436,6 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
         Button(
             onClick = {
                 eventoViewModel.salvarEvento(title, date, description)
-
                 navController.popBackStack()
             },
             modifier = Modifier
@@ -448,10 +446,15 @@ fun AddEventScreen(date: String, navController: NavController, eventoViewModel: 
             ),
             shape = MaterialTheme.shapes.large
         ) {
-            Text("Salvar Evento", color = Color.White, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
+            Text(
+                "Salvar Evento",
+                color = textColor,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+            )
         }
     }
 }
+
 
 
 
@@ -480,44 +483,39 @@ fun DaysOfWeekRow() {
 @Composable
 fun EventoView(evento: Evento, eventoViewModel: EventoViewModel) {
     val mutedTextColor = Color(0xFFBDC3C7)
-    val primaryColor = Color(0xFF3498DB)
-    Row (Modifier.clickable { /* TODO - Abrir Tela de Edição de Evento */ }) {
-        Text(
-            text = evento.nome,
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.bodyLarge.copy(color = mutedTextColor)
-        )
-        Text(
-            text = evento.descricao,
-            modifier = Modifier.padding(start = 16.dp),
-            style = MaterialTheme.typography.bodyMedium.copy(color = mutedTextColor)
-        )
-        Button(
-            onClick = {
-                eventoViewModel.deletarEvento(evento)
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = primaryColor
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable { /* TODO - Abrir Tela de Edição de Evento */ },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = evento.nome,
+                style = MaterialTheme.typography.bodyLarge.copy(color = mutedTextColor)
             )
+            Text(
+                text = evento.descricao,
+                style = MaterialTheme.typography.bodyMedium.copy(color = mutedTextColor)
+            )
+        }
+        IconButton(
+            onClick = { eventoViewModel.deletarEvento(evento) },
+            modifier = Modifier.padding(4.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Deletar Evento",
-                tint = Color.White
+                tint = Color.Red
             )
         }
     }
-
 }
 
 enum class Direction {
     FORWARD, BACKWARD
 }
 
-//@Preview(showBackground = true)
-//@Composable
-//fun DefaultPreview() {
-//    MaterialTheme {
-//        AppNavigation()
-//    }
-//}
