@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -477,7 +478,9 @@ fun AddEventScreen(
     categoriaViewModel.buscarTodasCategorias()
 
     if (eventoId != null) {
-        eventoViewModel.buscarEventoPorId(eventoId)
+        LaunchedEffect(eventoId) {
+            eventoViewModel.buscarEventoPorId(eventoId)
+        }
     }
     val evento by eventoViewModel.evento
     if (evento != null && !isInitialized) {
@@ -604,8 +607,10 @@ fun AddEventScreen(
             val interactionSource = remember { MutableInteractionSource() }
 
             OutlinedTextField(
-                value = categoria.nome,
-                onValueChange = { categoria.nome = it },
+                value = categoria?.nome?.takeIf { it.isNotEmpty() } ?: "Categoria não definida",  // Verifica se categoria é null ou nome está vazio
+                onValueChange = {
+                    categoria?.nome = it
+                },
                 label = { Text("Categoria", color = textColor) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -619,7 +624,10 @@ fun AddEventScreen(
                         tint = textColor
                     )
                 },
-                colors = TextFieldDefaults.colors(
+
+
+
+            colors = TextFieldDefaults.colors(
                     focusedContainerColor = fieldBackgroundColor,
                     unfocusedContainerColor = fieldBackgroundColor,
                     disabledContainerColor = fieldBackgroundColor,
