@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -51,15 +49,12 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.example.calendarios.model.database.AppDatabase
 import com.example.calendarios.viewmodel.CategoriaViewModel
 import com.example.calendarios.viewmodel.CategoriaViewModelFactory
-import com.example.calendarios.viewmodel.EventoViewModel
 
 class CategoriaActivity : ComponentActivity() {
     private val categoriaViewModel: CategoriaViewModel by viewModels {
@@ -88,18 +83,17 @@ fun AppNavigation(categoriaViewModel: CategoriaViewModel) {
                     navController.navigate("addCategoria")
                 },
                 categoriaViewModel = categoriaViewModel,
-                navController = navController
             )
         }
 
         composable("addCategoria") {
-            CadastroCategoriaScreen(categoriaViewModel)
+            CadastroCategoriaScreen(categoriaViewModel, navController)
         }
     }
 }
 
 @Composable
-fun CategoriasListScreen(onAddEvent: () -> Unit, navController: NavController, categoriaViewModel: CategoriaViewModel) {
+fun CategoriasListScreen(onAddEvent: () -> Unit, categoriaViewModel: CategoriaViewModel) {
     val backgroundColor = Color(0xFF1C1C1C)
     val primaryColor = Color(0xFF3498DB)
     val textColor = Color.White
@@ -119,13 +113,6 @@ fun CategoriasListScreen(onAddEvent: () -> Unit, navController: NavController, c
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* TODO - Botão Voltar */  }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Voltar",
-                    tint = primaryColor
-                )
-            }
             Text(
                 text = "Categorias",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -196,7 +183,10 @@ fun CategoriasListScreen(onAddEvent: () -> Unit, navController: NavController, c
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun CadastroCategoriaScreen(categoriaViewModel: CategoriaViewModel) {
+fun CadastroCategoriaScreen(
+    categoriaViewModel: CategoriaViewModel,
+    navController: NavController,
+) {
     val backgroundColor = Color(0xFF1C1C1C)  // Cor de fundo
     val primaryColor = Color(0xFF3498DB)  // Cor principal (botões e ícones)
     val textColor = Color.White  // Cor do texto
@@ -269,7 +259,10 @@ fun CadastroCategoriaScreen(categoriaViewModel: CategoriaViewModel) {
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = { categoriaViewModel.salvarCategoria(nomeCategoria, corSelecionada.toArgb()) },
+            onClick = {
+                categoriaViewModel.salvarCategoria(nomeCategoria, corSelecionada.toArgb())
+                navController.popBackStack()
+            },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
         ) {

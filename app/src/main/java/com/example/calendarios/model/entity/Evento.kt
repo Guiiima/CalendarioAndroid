@@ -1,6 +1,7 @@
 package com.example.calendarios.model.entity
 
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "evento")
@@ -11,4 +12,5 @@ data class Evento(
     var data: String,
     var descricao: String,
     var categoriaId: Int,
+    var local: String,
 )
