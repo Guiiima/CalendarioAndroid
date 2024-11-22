@@ -8,5 +8,7 @@ data class Categoria(
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0,
     var nome: String,
-    var cor: String
-)
+    var cor: Int
+) {
+    constructor() : this(nome = "", cor = 0)
+}

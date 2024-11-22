@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,9 +20,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -35,10 +47,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.calendarios.model.database.AppDatabase
 import com.example.calendarios.viewmodel.CategoriaViewModel
 import com.example.calendarios.viewmodel.CategoriaViewModelFactory
+import com.example.calendarios.viewmodel.EventoViewModel
 
 class CategoriaActivity : ComponentActivity() {
     private val categoriaViewModel: CategoriaViewModel by viewModels {
@@ -50,32 +71,154 @@ class CategoriaActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                CadastroCategoriaScreen()
+                AppNavigation(categoriaViewModel = categoriaViewModel)
             }
         }
     }
 }
 
+@Composable
+fun AppNavigation(categoriaViewModel: CategoriaViewModel) {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "categoriasList") {
+        composable("categoriasList") {
+            CategoriasListScreen(
+                onAddEvent = {
+                    navController.navigate("addCategoria")
+                },
+                categoriaViewModel = categoriaViewModel,
+                navController = navController
+            )
+        }
+
+        composable("addCategoria") {
+            CadastroCategoriaScreen(categoriaViewModel)
+        }
+    }
+}
+
+@Composable
+fun CategoriasListScreen(onAddEvent: () -> Unit, navController: NavController, categoriaViewModel: CategoriaViewModel) {
+    val backgroundColor = Color(0xFF1C1C1C)
+    val primaryColor = Color(0xFF3498DB)
+    val textColor = Color.White
+
+    var listaCategorias by categoriaViewModel.listaCategorias
+    categoriaViewModel.buscarTodasCategorias()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF2C3E50))
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { /* TODO - Botão Voltar */  }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Voltar",
+                    tint = primaryColor
+                )
+            }
+            Text(
+                text = "Categorias",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(start = 8.dp),
+                color = textColor
+            )
+        }
+        LazyColumn(
+            modifier = Modifier.weight(1f)
+        ) {
+            items(listaCategorias) { categoria ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically, // Alinha os itens verticalmente no centro
+                    horizontalArrangement = Arrangement.Start, // Alinha os itens à esquerda
+                    modifier = Modifier.fillMaxWidth() // Preenche a largura do item
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(1.dp, 40.dp) // Ajuste o tamanho da linha
+                            .background(
+                                Color(categoria.cor)
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(16.dp)) // Ajusta o espaçamento entre a linha e o texto
+                    Text(
+                        text = categoria.nome,
+                        color = textColor
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    IconButton(
+                        onClick = {
+                            categoriaViewModel.deletarCategoria(categoria)
+                        },
+                        modifier = Modifier.padding(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Deletar Evento",
+                            tint = Color.Red
+                        )
+                    }
+                }
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            FloatingActionButton(
+                onClick = { onAddEvent() },
+                containerColor = primaryColor
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Adicionar categoria",
+                    tint = Color.White
+                )
+            }
+        }
+    }
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun CadastroCategoriaScreen() {
+fun CadastroCategoriaScreen(categoriaViewModel: CategoriaViewModel) {
+    val backgroundColor = Color(0xFF1C1C1C)  // Cor de fundo
+    val primaryColor = Color(0xFF3498DB)  // Cor principal (botões e ícones)
+    val textColor = Color.White  // Cor do texto
+    val fieldBackgroundColor = Color(0xFF2C3E50)  // Cor de fundo dos campos
+
     var nomeCategoria by remember { mutableStateOf("") }
     var corSelecionada by remember { mutableStateOf(Color.Green) }
 
     val cores = listOf(
         Color.Red, Color.Green, Color.Blue, Color.Yellow, Color.Magenta,
-        Color.Cyan, Color.Gray, Color.Black, Color.White, Color(0xFFFFA500), // Laranja
-        Color(0xFF800080), // Roxo escuro
-        Color(0xFF808080), // Cinza claro
-        Color(0xFF000080)  // Azul marinho
+        Color.Cyan, Color.Gray, Color.Black, Color.White, Color(0xFFFFA500),
+        Color(0xFF800080),
+        Color(0xFF808080),
+        Color(0xFF000080)
     )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(color = backgroundColor)
             .padding(16.dp)
     ) {
-        // Campo de nome da categoria
         TextField(
             value = nomeCategoria,
             onValueChange = { nomeCategoria = it },
@@ -83,27 +226,33 @@ fun CadastroCategoriaScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            colors = TextFieldDefaults.textFieldColors(
-                focusedIndicatorColor = Color.Gray,
-                unfocusedIndicatorColor = Color.LightGray
-            )
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = fieldBackgroundColor,
+                unfocusedContainerColor = fieldBackgroundColor,
+                disabledContainerColor = fieldBackgroundColor,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedLabelColor = textColor,
+                unfocusedLabelColor = textColor
+            ),
+            shape = MaterialTheme.shapes.medium
         )
 
-        // Campo de seleção de cores
         Text(
             text = "Selecione uma cor:",
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
+            color = textColor
         )
 
-        // Exibe as opções de cores
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             cores.forEach { cor ->
                 Box(
                     modifier = Modifier
-                        .size(32.dp) // Tamanho menor dos círculos
+                        .size(32.dp)
                         .clip(CircleShape)
                         .background(cor)
                         .border(
@@ -111,20 +260,20 @@ fun CadastroCategoriaScreen() {
                             color = if (cor == corSelecionada) Color.Black else Color.Transparent,
                             shape = CircleShape
                         )
-                        .clickable { corSelecionada = cor } // Seleção da cor
+                        .clickable { corSelecionada = cor }
                 )
+                Spacer(modifier = Modifier.padding(5.dp))
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Botão de Salvar
         Button(
-            onClick = { /* Ação ao salvar */ },
-            modifier = Modifier.align(Alignment.End)
+            onClick = { categoriaViewModel.salvarCategoria(nomeCategoria, corSelecionada.toArgb()) },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
         ) {
             Text(text = "Salvar")
         }
     }
 }
-

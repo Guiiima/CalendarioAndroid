@@ -10,7 +10,5 @@ data class Evento(
     var nome: String,
     var data: String,
     var descricao: String,
-    var categoria: String,
-//    var recorrente: Boolean,
-//    var categoria: Categoria,
+    var categoriaId: Int,
 )

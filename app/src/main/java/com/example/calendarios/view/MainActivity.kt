@@ -391,18 +391,20 @@ fun AddEventScreen(
     var nome by remember { mutableStateOf("") }
     var local by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
-    var categoria by remember { mutableStateOf("") }
+    var categoria by categoriaViewModel.categoria
+    var categoriaId: Int
     var isInitialized by remember { mutableStateOf(false) }
 
-    val categorias = listOf(
-        "Cultura", "Esporte", "Tecnologia", "Música", "Educação",
-        "Lazer", "Saúde", "Negócios", "Gastronomia", "Eventos Sociais",
-        "Desenvolvimento Pessoal", "Voluntariado", "Meio Ambiente", "Artes",
-        "Bem-estar", "Inovação"
-    )
+//    val categorias = listOf(
+//        "Cultura", "Esporte", "Tecnologia", "Música", "Educação",
+//        "Lazer", "Saúde", "Negócios", "Gastronomia", "Eventos Sociais",
+//        "Desenvolvimento Pessoal", "Voluntariado", "Meio Ambiente", "Artes",
+//        "Bem-estar", "Inovação"
+//    )
 
 /* TODO - Implementar Categorias */
-//    var categorias by categoriaViewModel.listaCategorias
+    var categorias by categoriaViewModel.listaCategorias
+    categoriaViewModel.buscarTodasCategorias()
 
     eventoId?.let { eventoViewModel.buscarEventoPorId(it) }
     val evento by eventoViewModel.evento
@@ -410,12 +412,12 @@ fun AddEventScreen(
         evento?.let {
             nome = it.nome
             descricao = it.descricao
-            categoria = it.categoria // Supondo que o evento tenha o campo categoria
+            categoriaId = it.categoriaId // Supondo que o evento tenha o campo categoria
+            categoriaViewModel.buscarCategoriaPorId(categoriaId)
         }
         isInitialized = true
     }
 
-    // Para controle do estado de visibilidade do dropdown
     var expanded by remember { mutableStateOf(false) }
 
     Column(
@@ -516,18 +518,15 @@ fun AddEventScreen(
             shape = MaterialTheme.shapes.medium
         )
 
-        // Dropdown para selecionar categoria
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
         ) {
-            // Exibe o menu de categorias
             val interactionSource = remember { MutableInteractionSource() }
 
-            // Menu de categorias com pesquisa
             OutlinedTextField(
-                value = categoria,
-                onValueChange = { categoria = it },
+                value = categoria.nome,
+                onValueChange = { categoria.nome = it },
                 label = { Text("Categoria", color = textColor) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -567,18 +566,24 @@ fun AddEventScreen(
                                 expanded = false
                             },
                             text = {
-                                Box(
-                                    modifier = Modifier
-                                        .size(1.dp, 40.dp) // Ajuste o tamanho da linha
-                                        .background(
-                                            Color.Green
-                                        )
-                                )
-                                Spacer(modifier = Modifier.width(20.dp)) // Espaço entre a linha e o texto
-                                Text(
-                                    text = categoriaOption,
-                                    color = textColor
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically, // Alinha os itens verticalmente no centro
+                                    horizontalArrangement = Arrangement.Start, // Alinha os itens à esquerda
+                                    modifier = Modifier.fillMaxWidth() // Preenche a largura do item
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(1.dp, 40.dp) // Ajuste o tamanho da linha
+                                            .background(
+                                                Color(categoriaOption.cor)
+                                            )
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp)) // Ajusta o espaçamento entre a linha e o texto
+                                    Text(
+                                        text = categoriaOption.nome,
+                                        color = textColor
+                                    )
+                                }
                             }
                         )
                     }
@@ -589,7 +594,7 @@ fun AddEventScreen(
         Button(
             onClick = {
                 if (eventoId != null) {
-                    val eventoAtualizado = evento?.copy(nome = nome, descricao = descricao, categoria = categoria)
+                    val eventoAtualizado = evento?.copy(nome = nome, descricao = descricao, categoriaId = categoria.id)
                     eventoAtualizado?.let {
                         eventoViewModel.atualizarEvento(it)
                         navController.popBackStack()

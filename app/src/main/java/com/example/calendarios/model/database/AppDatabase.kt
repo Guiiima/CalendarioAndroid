@@ -14,7 +14,7 @@ import com.example.calendarios.model.entity.Lembrete
 
 @Database(
     entities = [Evento::class, Categoria::class, Lembrete::class],
-    version = 2,
+    version = 4,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun eventoDao() : EventoDAO

@@ -14,6 +14,9 @@ interface CategoriaDAO {
     @Query("SELECT * FROM categoria")
     suspend fun buscarTodos(): List<Categoria>
 
+    @Query("SELECT * FROM categoria WHERE id = :id")
+    suspend fun buscarPorId(id: Int): Categoria
+
     @Delete
     suspend fun deletar(categoria: Categoria)
 }

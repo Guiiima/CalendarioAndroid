@@ -9,14 +9,19 @@ import kotlinx.coroutines.launch
 
 class CategoriaViewModel(private val categoriaDAO: CategoriaDAO): ViewModel() {
     var listaCategorias = mutableStateOf(listOf<Categoria>())
+    var categoria = mutableStateOf(Categoria())
+
+    init {
+        buscarTodasCategorias()
+    }
     
-    private fun buscarTodasCategorias() {
+    fun buscarTodasCategorias() {
         viewModelScope.launch { 
             listaCategorias.value = categoriaDAO.buscarTodos()
         }
     }
     
-    fun salvarCategoria(nome: String, cor: String = "Verde"): Boolean {
+    fun salvarCategoria(nome: String, cor: Int): Boolean {
         if (nome.isBlank()) {
             return false
         }
@@ -29,5 +34,18 @@ class CategoriaViewModel(private val categoriaDAO: CategoriaDAO): ViewModel() {
         }
         
         return true
+    }
+
+    fun buscarCategoriaPorId(id: Int) {
+        viewModelScope.launch {
+            categoria.value = categoriaDAO.buscarPorId(id)
+        }
+    }
+
+    fun deletarCategoria(categoria: Categoria) {
+        viewModelScope.launch {
+            categoriaDAO.deletar(categoria)
+            buscarTodasCategorias()
+        }
     }
 }
