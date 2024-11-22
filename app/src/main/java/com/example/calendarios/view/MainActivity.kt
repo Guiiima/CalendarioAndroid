@@ -2,6 +2,7 @@ package com.example.calendarios.view
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -58,7 +60,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -93,6 +100,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 AppNavigation(eventoViewModel, categoriaViewModel)
+
             }
         }
     }
@@ -158,7 +166,6 @@ fun CalendarView(navController: NavController) {
     val monthsList = remember(currentYear) {
         Month.values().map { it to currentYear }
     }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -181,6 +188,7 @@ fun CalendarView(navController: NavController) {
             }
         }
     }
+    IconButtonWithDropdown()
 }
 
 @Composable
@@ -217,19 +225,70 @@ fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
                 tint = Color.White
             )
         }
+    }
+}
+@Composable
+fun IconButtonWithDropdown() {
+    val context = LocalContext.current
+    var expanded by remember { mutableStateOf(false) } // Controla se o menu está visível
+    val options = listOf("Cadastrar Categoria") // Opções do menu
 
-        IconButton(onClick = {
-            val intent = Intent(context, CategoriaActivity::class.java)
-            context.startActivity(intent)
-        }) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        FloatingActionButton(
+            onClick = { expanded = true },
+            shape = MaterialTheme.shapes.large,
+            containerColor = Color(0xFF5A9BD5).copy(alpha = 0.8f), // Azul mais suave
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(start = 16.dp, end = 32.dp, bottom = 32.dp) // Padding adicional à direita e embaixo
+                .size(50.dp)
+                .zIndex(1f)
+        ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.List,
+                imageVector = Icons.Default.Menu,
                 contentDescription = "Categorias",
-                tint = Color.White
+                tint = Color.White,
+                modifier = Modifier.size(32.dp) // Tamanho do ícone
             )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            offset = DpOffset(x = (-16).dp, y = 8.dp),
+            modifier = Modifier.background(Color(0xFF3498DB).copy(alpha = 0.6f))
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    onClick = {
+                        expanded = false
+                        if (option == "Cadastrar Categoria") {
+                            val intent = Intent(context, CategoriaActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                    },
+                    text = {
+                        Text(
+                            text = option,
+                            color = Color.Black,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                )
+            }
         }
     }
 }
+
+
+
+
+
+
+
+
 
 @Composable
 fun CalendarMonthView(month: Month, year: Int, onDateSelected: (LocalDate) -> Unit) {
@@ -561,7 +620,8 @@ fun AddEventScreen(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedLabelColor = textColor,
-                    unfocusedLabelColor = textColor
+                    unfocusedLabelColor = textColor,
+
                 ),
                 interactionSource = interactionSource
             )
