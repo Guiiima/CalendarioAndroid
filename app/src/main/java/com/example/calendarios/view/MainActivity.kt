@@ -1,11 +1,11 @@
 package com.example.calendarios.view
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -44,7 +44,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,9 +52,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -66,8 +65,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.calendarios.model.database.AppDatabase
 import com.example.calendarios.model.entity.Evento
+import com.example.calendarios.viewmodel.CategoriaViewModel
+import com.example.calendarios.viewmodel.CategoriaViewModelFactory
 import com.example.calendarios.viewmodel.EventoViewModel
 import com.example.calendarios.viewmodel.EventoViewModelFactory
+import java.time.Clock
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.DateTimeFormatter
@@ -79,19 +81,23 @@ class MainActivity : ComponentActivity() {
         val dao = AppDatabase.getDatabase(applicationContext).eventoDao()
         EventoViewModelFactory(dao)
     }
+    private val categoriaViewModel: CategoriaViewModel by viewModels {
+        val dao = AppDatabase.getDatabase(applicationContext).categoriaDao()
+        CategoriaViewModelFactory(dao)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                AppNavigation(eventoViewModel)
+                AppNavigation(eventoViewModel, categoriaViewModel)
             }
         }
     }
 }
 
 @Composable
-fun AppNavigation(eventoViewModel: EventoViewModel) {
+fun AppNavigation(eventoViewModel: EventoViewModel, categoriaViewModel: CategoriaViewModel) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "calendarView") {
@@ -117,7 +123,7 @@ fun AppNavigation(eventoViewModel: EventoViewModel) {
             arguments = listOf(navArgument("date") { type = NavType.StringType })
         ) { backStackEntry ->
             val date = backStackEntry.arguments?.getString("date") ?: ""
-            AddEventScreen(date = date, navController = navController, eventoViewModel = eventoViewModel)
+            AddEventScreen(date = date, navController = navController, eventoViewModel = eventoViewModel, categoriaViewModel = categoriaViewModel)
         }
         composable(
             route = "editar_evento/{eventoId}",
@@ -129,6 +135,7 @@ fun AppNavigation(eventoViewModel: EventoViewModel) {
                     date = null.toString(),
                     navController = navController,
                     eventoViewModel = eventoViewModel,
+                    categoriaViewModel = categoriaViewModel,
                     eventoId = eventoId
                 )
             }
@@ -170,6 +177,8 @@ fun CalendarView(navController: NavController) {
 }
 @Composable
 fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
+    val context = LocalContext.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -200,6 +209,17 @@ fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
                 tint = Color.White
             )
         }
+
+        IconButton(onClick = {
+            val intent = Intent(context, CategoriaActivity::class.java)
+            context.startActivity(intent)
+        }) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Cadastrar Categoria",
+                tint = Color.White
+            )
+        }
     }
 }
 
@@ -207,7 +227,7 @@ fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
 fun CalendarMonthView(month: Month, year: Int, onDateSelected: (LocalDate) -> Unit) {
     val firstDayOfMonth = LocalDate.of(year, month, 1)
     val lastDayOfMonth = firstDayOfMonth.withDayOfMonth(firstDayOfMonth.lengthOfMonth())
-    val currentDate = LocalDate.now()
+    val currentDate = LocalDate.now(Clock.systemUTC())
 
     Column(
         modifier = Modifier
@@ -354,6 +374,7 @@ fun AddEventScreen(
     date: String,
     navController: NavController,
     eventoViewModel: EventoViewModel,
+    categoriaViewModel: CategoriaViewModel,
     eventoId: Int? = null
 ) {
     val backgroundColor = Color(0xFF1C1C1C)
@@ -379,6 +400,9 @@ fun AddEventScreen(
         "Desenvolvimento Pessoal", "Voluntariado", "Meio Ambiente", "Artes",
         "Bem-estar", "Inovação"
     )
+
+/* TODO - Implementar Categorias */
+//    var categorias by categoriaViewModel.listaCategorias
 
     eventoId?.let { eventoViewModel.buscarEventoPorId(it) }
     val evento by eventoViewModel.evento
@@ -492,58 +516,75 @@ fun AddEventScreen(
             shape = MaterialTheme.shapes.medium
         )
 
-        // Menu de categorias com pesquisa
-        OutlinedTextField(
-            value = categoria,
-            onValueChange = { categoria = it },
-            label = { Text("Categoria", color = textColor) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            readOnly = true,
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Abrir menu de categorias",
-                    tint = textColor
-                )
-            },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = primaryColor,
-                unfocusedBorderColor = Color.Transparent,
-                focusedLabelColor = textColor,
-                unfocusedLabelColor = textColor
-            )
-        )
-
         // Dropdown para selecionar categoria
         ExposedDropdownMenuBox(
             expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
+            onExpandedChange = { expanded = !expanded },
         ) {
             // Exibe o menu de categorias
             val interactionSource = remember { MutableInteractionSource() }
 
+            // Menu de categorias com pesquisa
+            OutlinedTextField(
+                value = categoria,
+                onValueChange = { categoria = it },
+                label = { Text("Categoria", color = textColor) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+                    .menuAnchor(),
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Abrir menu de categorias",
+                        tint = textColor
+                    )
+                },
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = primaryColor,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedLabelColor = textColor,
+                    unfocusedLabelColor = textColor,
+                ),
+                interactionSource = interactionSource
+            )
+
             ExposedDropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = fieldBackgroundColor)
             ) {
-                categorias.forEach { categoriaOption ->
-                    DropdownMenuItem(
-                        onClick = {
-                            categoria = categoriaOption
-                            expanded = false
-                        }
-                    ) {
-                        Text(text = categoriaOption, color = textColor)
+                if (categorias.isEmpty()) {
+                    Text("Nenhuma categoria disponível", modifier = Modifier.padding(8.dp))
+                } else {
+                    categorias.forEach { categoriaOption ->
+                        DropdownMenuItem(
+                            onClick = {
+                                categoria = categoriaOption
+                                expanded = false
+                            },
+                            text = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(1.dp, 40.dp) // Ajuste o tamanho da linha
+                                        .background(
+                                            Color.Green
+                                        )
+                                )
+                                Spacer(modifier = Modifier.width(20.dp)) // Espaço entre a linha e o texto
+                                Text(
+                                    text = categoriaOption,
+                                    color = textColor
+                                )
+                            }
+                        )
                     }
                 }
             }
-
-
-
-
-            }
+        }
 
         Button(
             onClick = {
@@ -641,8 +682,6 @@ fun EventoView(evento: Evento, eventoViewModel: EventoViewModel, navController: 
         }
     }
 }
-
-
 
 enum class Direction {
     FORWARD, BACKWARD
