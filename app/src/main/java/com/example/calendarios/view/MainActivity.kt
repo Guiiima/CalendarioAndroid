@@ -546,7 +546,9 @@ fun AddEventScreen(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedLabelColor = textColor,
-                unfocusedLabelColor = textColor
+                unfocusedLabelColor = textColor,
+                focusedTextColor = textColor,
+                unfocusedTextColor = textColor
             ),
             shape = MaterialTheme.shapes.medium
         )
@@ -565,7 +567,9 @@ fun AddEventScreen(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedLabelColor = textColor,
-                unfocusedLabelColor = textColor
+                unfocusedLabelColor = textColor,
+                focusedTextColor = textColor,
+                unfocusedTextColor = textColor
             ),
             shape = MaterialTheme.shapes.medium
         )
@@ -586,7 +590,9 @@ fun AddEventScreen(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedLabelColor = textColor,
-                unfocusedLabelColor = textColor
+                unfocusedLabelColor = textColor,
+                focusedTextColor = textColor,
+                unfocusedTextColor = textColor
             ),
             shape = MaterialTheme.shapes.medium
         )
@@ -621,7 +627,8 @@ fun AddEventScreen(
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedLabelColor = textColor,
                     unfocusedLabelColor = textColor,
-
+                    focusedTextColor = textColor,
+                    unfocusedTextColor = textColor
                 ),
                 interactionSource = interactionSource
             )
