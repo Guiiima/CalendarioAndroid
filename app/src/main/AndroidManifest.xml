@@ -23,6 +23,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".view.CategoriaActivity"
+            android:exported="true"
+            android:label="Categorias"
+            android:theme="@style/Theme.Calendarios">
+        </activity>
     </application>
 
 </manifest>

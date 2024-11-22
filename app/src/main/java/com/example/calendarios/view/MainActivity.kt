@@ -1,11 +1,11 @@
 package com.example.calendarios.view
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -25,11 +25,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -44,7 +46,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,9 +54,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -66,8 +67,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.calendarios.model.database.AppDatabase
 import com.example.calendarios.model.entity.Evento
+import com.example.calendarios.viewmodel.CategoriaViewModel
+import com.example.calendarios.viewmodel.CategoriaViewModelFactory
 import com.example.calendarios.viewmodel.EventoViewModel
 import com.example.calendarios.viewmodel.EventoViewModelFactory
+import java.time.Clock
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.DateTimeFormatter
@@ -79,19 +83,23 @@ class MainActivity : ComponentActivity() {
         val dao = AppDatabase.getDatabase(applicationContext).eventoDao()
         EventoViewModelFactory(dao)
     }
+    private val categoriaViewModel: CategoriaViewModel by viewModels {
+        val dao = AppDatabase.getDatabase(applicationContext).categoriaDao()
+        CategoriaViewModelFactory(dao)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                AppNavigation(eventoViewModel)
+                AppNavigation(eventoViewModel, categoriaViewModel)
             }
         }
     }
 }
 
 @Composable
-fun AppNavigation(eventoViewModel: EventoViewModel) {
+fun AppNavigation(eventoViewModel: EventoViewModel, categoriaViewModel: CategoriaViewModel) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "calendarView") {
@@ -117,25 +125,31 @@ fun AppNavigation(eventoViewModel: EventoViewModel) {
             arguments = listOf(navArgument("date") { type = NavType.StringType })
         ) { backStackEntry ->
             val date = backStackEntry.arguments?.getString("date") ?: ""
-            AddEventScreen(date = date, navController = navController, eventoViewModel = eventoViewModel)
+            AddEventScreen(
+                date = date,
+                navController = navController,
+                eventoViewModel = eventoViewModel,
+                categoriaViewModel = categoriaViewModel
+            )
         }
         composable(
-            route = "editar_evento/{eventoId}",
+            route = "editar_evento/{eventoId}/{data}",
             arguments = listOf(navArgument("eventoId") { type = NavType.IntType })
         ) { backStackEntry ->
             val eventoId = backStackEntry.arguments?.getInt("eventoId")
+            val data = backStackEntry.arguments?.getString("data") ?: null.toString()
             if (eventoId != null) {
                 AddEventScreen(
-                    date = null.toString(),
+                    date = data,
                     navController = navController,
                     eventoViewModel = eventoViewModel,
+                    categoriaViewModel = categoriaViewModel,
                     eventoId = eventoId
                 )
             }
         }
     }
 }
-
 
 
 @Composable
@@ -168,8 +182,11 @@ fun CalendarView(navController: NavController) {
         }
     }
 }
+
 @Composable
 fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
+    val context = LocalContext.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -200,6 +217,17 @@ fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
                 tint = Color.White
             )
         }
+
+        IconButton(onClick = {
+            val intent = Intent(context, CategoriaActivity::class.java)
+            context.startActivity(intent)
+        }) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.List,
+                contentDescription = "Categorias",
+                tint = Color.White
+            )
+        }
     }
 }
 
@@ -207,7 +235,7 @@ fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
 fun CalendarMonthView(month: Month, year: Int, onDateSelected: (LocalDate) -> Unit) {
     val firstDayOfMonth = LocalDate.of(year, month, 1)
     val lastDayOfMonth = firstDayOfMonth.withDayOfMonth(firstDayOfMonth.lengthOfMonth())
-    val currentDate = LocalDate.now()
+    val currentDate = LocalDate.now(Clock.systemUTC())
 
     Column(
         modifier = Modifier
@@ -217,7 +245,9 @@ fun CalendarMonthView(month: Month, year: Int, onDateSelected: (LocalDate) -> Un
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "${month.getDisplayName(TextStyle.FULL, Locale("pt", "BR")).toUpperCase()} $year",
+            text = "${
+                month.getDisplayName(TextStyle.FULL, Locale("pt", "BR")).toUpperCase()
+            } $year",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp),
@@ -285,48 +315,57 @@ fun DaysOfMonthGrid(
 }
 
 
-    @Composable
-    fun EventsListScreen(date: String, onAddEvent: () -> Unit, navController: NavController, eventoViewModel: EventoViewModel) {
-        val backgroundColor = Color(0xFF1C1C1C)
-        val primaryColor = Color(0xFF3498DB)
-        val textColor = Color.White
+@Composable
+fun EventsListScreen(
+    date: String,
+    onAddEvent: () -> Unit,
+    navController: NavController,
+    eventoViewModel: EventoViewModel
+) {
+    val backgroundColor = Color(0xFF1C1C1C)
+    val primaryColor = Color(0xFF3498DB)
+    val textColor = Color.White
 
-        var listaEventos by eventoViewModel.listaEventos
-        eventoViewModel.buscarEventos(date)
+    var listaEventos by eventoViewModel.listaEventos
+    eventoViewModel.buscarEventos(date)
 
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+    ) {
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .background(backgroundColor)
+                .fillMaxWidth()
+                .background(Color(0xFF2C3E50))
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF2C3E50))
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Voltar",
-                        tint = primaryColor
-                    )
-                }
-                Text(
-                    text = "Eventos - $date",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.padding(start = 8.dp),
-                    color = textColor
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Voltar",
+                    tint = primaryColor
                 )
             }
-            LazyColumn(
-                modifier = Modifier.weight(1f)
-            ) {
-                items(listaEventos) { event ->
-                    EventoView(evento = event, eventoViewModel = eventoViewModel, navController = navController)
-                }
+            Text(
+                text = "Eventos - $date",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(start = 8.dp),
+                color = textColor
+            )
+        }
+        LazyColumn(
+            modifier = Modifier.weight(1f)
+        ) {
+            items(listaEventos) { event ->
+                EventoView(
+                    evento = event,
+                    eventoViewModel = eventoViewModel,
+                    navController = navController
+                )
             }
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -354,6 +393,7 @@ fun AddEventScreen(
     date: String,
     navController: NavController,
     eventoViewModel: EventoViewModel,
+    categoriaViewModel: CategoriaViewModel,
     eventoId: Int? = null
 ) {
     val backgroundColor = Color(0xFF1C1C1C)
@@ -370,28 +410,28 @@ fun AddEventScreen(
     var nome by remember { mutableStateOf("") }
     var local by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
-    var categoria by remember { mutableStateOf("") }
+    var categoria by categoriaViewModel.categoria
+    var categoriaId: Int
     var isInitialized by remember { mutableStateOf(false) }
 
-    val categorias = listOf(
-        "Cultura", "Esporte", "Tecnologia", "Música", "Educação",
-        "Lazer", "Saúde", "Negócios", "Gastronomia", "Eventos Sociais",
-        "Desenvolvimento Pessoal", "Voluntariado", "Meio Ambiente", "Artes",
-        "Bem-estar", "Inovação"
-    )
+    var categorias by categoriaViewModel.listaCategorias
+    categoriaViewModel.buscarTodasCategorias()
 
-    eventoId?.let { eventoViewModel.buscarEventoPorId(it) }
+    if (eventoId != null) {
+        eventoViewModel.buscarEventoPorId(eventoId)
+    }
     val evento by eventoViewModel.evento
     if (evento != null && !isInitialized) {
         evento?.let {
             nome = it.nome
             descricao = it.descricao
-            categoria = it.categoria // Supondo que o evento tenha o campo categoria
+            local = it.local
+            categoriaId = it.categoriaId
+            categoriaViewModel.buscarCategoriaPorId(categoriaId)
         }
         isInitialized = true
     }
 
-    // Para controle do estado de visibilidade do dropdown
     var expanded by remember { mutableStateOf(false) }
 
     Column(
@@ -492,69 +532,97 @@ fun AddEventScreen(
             shape = MaterialTheme.shapes.medium
         )
 
-        // Menu de categorias com pesquisa
-        OutlinedTextField(
-            value = categoria,
-            onValueChange = { categoria = it },
-            label = { Text("Categoria", color = textColor) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            readOnly = true,
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Abrir menu de categorias",
-                    tint = textColor
-                )
-            },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = primaryColor,
-                unfocusedBorderColor = Color.Transparent,
-                focusedLabelColor = textColor,
-                unfocusedLabelColor = textColor
-            )
-        )
-
-        // Dropdown para selecionar categoria
         ExposedDropdownMenuBox(
             expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
+            onExpandedChange = { expanded = !expanded },
         ) {
-            // Exibe o menu de categorias
             val interactionSource = remember { MutableInteractionSource() }
+
+            OutlinedTextField(
+                value = categoria.nome,
+                onValueChange = { categoria.nome = it },
+                label = { Text("Categoria", color = textColor) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+                    .menuAnchor(),
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Abrir menu de categorias",
+                        tint = textColor
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = fieldBackgroundColor,
+                    unfocusedContainerColor = fieldBackgroundColor,
+                    disabledContainerColor = fieldBackgroundColor,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedLabelColor = textColor,
+                    unfocusedLabelColor = textColor
+                ),
+                interactionSource = interactionSource
+            )
 
             ExposedDropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = fieldBackgroundColor)
             ) {
-                categorias.forEach { categoriaOption ->
-                    DropdownMenuItem(
-                        onClick = {
-                            categoria = categoriaOption
-                            expanded = false
-                        }
-                    ) {
-                        Text(text = categoriaOption, color = textColor)
+                if (categorias.isEmpty()) {
+                    Text("Nenhuma categoria disponível", modifier = Modifier.padding(8.dp))
+                } else {
+                    categorias.forEach { categoriaOption ->
+                        DropdownMenuItem(
+                            onClick = {
+                                categoria = categoriaOption
+                                expanded = false
+                            },
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically, // Alinha os itens verticalmente no centro
+                                    horizontalArrangement = Arrangement.Start, // Alinha os itens à esquerda
+                                    modifier = Modifier.fillMaxWidth() // Preenche a largura do item
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(1.dp, 40.dp) // Ajuste o tamanho da linha
+                                            .background(
+                                                Color(categoriaOption.cor)
+                                            )
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp)) // Ajusta o espaçamento entre a linha e o texto
+                                    Text(
+                                        text = categoriaOption.nome,
+                                        color = textColor
+                                    )
+                                }
+                            }
+                        )
                     }
                 }
             }
-
-
-
-
-            }
+        }
 
         Button(
             onClick = {
                 if (eventoId != null) {
-                    val eventoAtualizado = evento?.copy(nome = nome, descricao = descricao, categoria = categoria)
+                    val eventoAtualizado = evento?.copy(
+                        nome = nome,
+                        local = local,
+                        descricao = descricao,
+                        categoriaId = categoria.id
+                    )
                     eventoAtualizado?.let {
                         eventoViewModel.atualizarEvento(it)
                         navController.popBackStack()
                     }
                 } else {
-                    eventoViewModel.salvarEvento(nome, date, descricao, categoria)
+                    eventoViewModel.salvarEvento(nome, date, local, descricao, categoria)
                     navController.popBackStack()
                 }
                 navController.popBackStack()
@@ -606,7 +674,7 @@ fun EventoView(evento: Evento, eventoViewModel: EventoViewModel, navController: 
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
-                        navController.navigate("editar_evento/${evento.id}")
+                        navController.navigate("editar_evento/${evento.id}/${evento.data}")
 
                     }
                 )
@@ -641,8 +709,6 @@ fun EventoView(evento: Evento, eventoViewModel: EventoViewModel, navController: 
         }
     }
 }
-
-
 
 enum class Direction {
     FORWARD, BACKWARD

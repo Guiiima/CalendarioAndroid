@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.calendarios.model.dao.EventoDAO
+import com.example.calendarios.model.entity.Categoria
 import com.example.calendarios.model.entity.Evento
 import kotlinx.coroutines.launch
 
@@ -12,20 +13,18 @@ class EventoViewModel(private val eventoDAO: EventoDAO): ViewModel() {
     var listaEventos = mutableStateOf(listOf<Evento>())
     var evento = mutableStateOf<Evento?>(null)
 
-    // Função para buscar eventos por data
     fun buscarEventos(data: String) {
         viewModelScope.launch {
             listaEventos.value = eventoDAO.buscarPorData(data)
         }
     }
 
-    // Função para salvar um novo evento
-    fun salvarEvento(nome: String, data: String, descricao: String, categoria: String): String {
+    fun salvarEvento(nome: String, data: String, local: String, descricao: String, categoria: Categoria): String {
         if (nome.isBlank()) {
             return "Preencha o nome do Evento!"
         }
 
-        val evento = Evento(id = 0, nome = nome, data = data, descricao = descricao, categoria = categoria)
+        val evento = Evento(id = 0, nome = nome, data = data, local = local, descricao = descricao, categoriaId = categoria.id)
 
         viewModelScope.launch {
             eventoDAO.inserir(evento)
