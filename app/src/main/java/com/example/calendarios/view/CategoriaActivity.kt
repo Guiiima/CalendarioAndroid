@@ -127,7 +127,9 @@ fun CategoriasListScreen(onAddEvent: () -> Unit, categoriaViewModel: CategoriaVi
                 Row(
                     verticalAlignment = Alignment.CenterVertically, // Alinha os itens verticalmente no centro
                     horizontalArrangement = Arrangement.Start, // Alinha os itens à esquerda
-                    modifier = Modifier.fillMaxWidth() // Preenche a largura do item
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 5.dp)
                 ) {
                     Box(
                         modifier = Modifier

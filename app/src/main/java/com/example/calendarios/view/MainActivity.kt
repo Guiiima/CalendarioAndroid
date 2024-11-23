@@ -79,9 +79,11 @@ import com.example.calendarios.viewmodel.CategoriaViewModel
 import com.example.calendarios.viewmodel.CategoriaViewModelFactory
 import com.example.calendarios.viewmodel.EventoViewModel
 import com.example.calendarios.viewmodel.EventoViewModelFactory
+import kotlinx.coroutines.delay
 import java.time.Clock
 import java.time.LocalDate
 import java.time.Month
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
@@ -228,6 +230,7 @@ fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
         }
     }
 }
+
 @Composable
 fun IconButtonWithDropdown() {
     val context = LocalContext.current
@@ -243,7 +246,11 @@ fun IconButtonWithDropdown() {
             containerColor = Color(0xFF5A9BD5).copy(alpha = 0.8f), // Azul mais suave
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(start = 16.dp, end = 32.dp, bottom = 32.dp) // Padding adicional à direita e embaixo
+                .padding(
+                    start = 16.dp,
+                    end = 32.dp,
+                    bottom = 32.dp
+                ) // Padding adicional à direita e embaixo
                 .size(50.dp)
                 .zIndex(1f)
         ) {
@@ -284,18 +291,11 @@ fun IconButtonWithDropdown() {
 }
 
 
-
-
-
-
-
-
-
 @Composable
 fun CalendarMonthView(month: Month, year: Int, onDateSelected: (LocalDate) -> Unit) {
     val firstDayOfMonth = LocalDate.of(year, month, 1)
     val lastDayOfMonth = firstDayOfMonth.withDayOfMonth(firstDayOfMonth.lengthOfMonth())
-    val currentDate = LocalDate.now(Clock.systemUTC())
+    val currentDate = LocalDate.now(ZoneOffset.of("-03:00"))
 
     Column(
         modifier = Modifier
@@ -471,19 +471,18 @@ fun AddEventScreen(
     var local by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
     var categoria by categoriaViewModel.categoria
-    var categoriaId: Int
+    var categoriaId: Int = 0
     var isInitialized by remember { mutableStateOf(false) }
 
     var categorias by categoriaViewModel.listaCategorias
     categoriaViewModel.buscarTodasCategorias()
 
-    if (eventoId != null) {
-        LaunchedEffect(eventoId) {
-            eventoViewModel.buscarEventoPorId(eventoId)
-        }
-    }
     val evento by eventoViewModel.evento
-    if (evento != null && !isInitialized) {
+
+    if (eventoId != null) {
+        eventoViewModel.buscarEventoPorId(eventoId)
+    }
+    if (evento != null && evento!!.id == eventoId && !isInitialized) {
         evento?.let {
             nome = it.nome
             descricao = it.descricao
@@ -493,6 +492,11 @@ fun AddEventScreen(
         }
         isInitialized = true
     }
+
+    if (evento == null || evento!!.id != eventoId) {
+        categoriaViewModel.buscarCategoriaPorId(categoriaId)
+    }
+
 
     var expanded by remember { mutableStateOf(false) }
 
@@ -607,7 +611,8 @@ fun AddEventScreen(
             val interactionSource = remember { MutableInteractionSource() }
 
             OutlinedTextField(
-                value = categoria?.nome?.takeIf { it.isNotEmpty() } ?: "Categoria não definida",  // Verifica se categoria é null ou nome está vazio
+                value = categoria?.nome?.takeIf { it.isNotEmpty() }
+                    ?: "Categoria não definida",  // Verifica se categoria é null ou nome está vazio
                 onValueChange = {
                     categoria?.nome = it
                 },
@@ -625,9 +630,7 @@ fun AddEventScreen(
                     )
                 },
 
-
-
-            colors = TextFieldDefaults.colors(
+                colors = TextFieldDefaults.colors(
                     focusedContainerColor = fieldBackgroundColor,
                     unfocusedContainerColor = fieldBackgroundColor,
                     disabledContainerColor = fieldBackgroundColor,

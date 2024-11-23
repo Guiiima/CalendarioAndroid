@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.calendarios.model.dao.EventoDAO
 import com.example.calendarios.model.entity.Categoria
 import com.example.calendarios.model.entity.Evento
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class EventoViewModel(private val eventoDAO: EventoDAO): ViewModel() {
