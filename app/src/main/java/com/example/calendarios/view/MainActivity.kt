@@ -406,6 +406,10 @@ fun AddEventScreen(
     var categoriaId: Int = 0
     var isInitialized by remember { mutableStateOf(false) }
 
+    if (!isInitialized) {
+
+    }
+
     var categorias by categoriaViewModel.listaCategorias
     categoriaViewModel.buscarTodasCategorias()
 
@@ -425,11 +429,6 @@ fun AddEventScreen(
         isInitialized = true
     }
 
-    if (evento == null || evento!!.id != eventoId) {
-        categoriaViewModel.buscarCategoriaPorId(categoriaId)
-    }
-
-
     var expanded by remember { mutableStateOf(false) }
 
     Column(
@@ -444,7 +443,10 @@ fun AddEventScreen(
                 .padding(bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { navController.popBackStack() }) {
+            IconButton(onClick = {
+                categoriaViewModel.buscarCategoriaPorId(0)
+                navController.popBackStack()
+            }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Voltar",
@@ -635,6 +637,7 @@ fun AddEventScreen(
                     eventoViewModel.salvarEvento(nome, date, local, descricao, categoria)
                     navController.popBackStack()
                 }
+                categoriaViewModel.buscarCategoriaPorId(0)
                 navController.popBackStack()
             },
             modifier = Modifier
