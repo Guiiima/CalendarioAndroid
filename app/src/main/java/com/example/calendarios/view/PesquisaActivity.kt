@@ -107,8 +107,8 @@ fun PesquisaScreen(eventoViewModel: EventoViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(eventos.size) { index ->
-                val (eventName, eventDate) = eventos[index]
-                val isToday = eventDate == today
+                val evento = eventos[index]
+                val isToday = evento.data == today
                 val containerColor = if (isToday) Color(0xFF3498DB) else Color(0xFF605E5E)
 
                 Box(
@@ -118,7 +118,7 @@ fun PesquisaScreen(eventoViewModel: EventoViewModel) {
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "$eventName - $eventDate",
+                        text = "${evento.nome} - ${evento.data}",
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.White
                     )
