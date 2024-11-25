@@ -48,4 +48,4 @@ Um aplicativo simples e funcional para gerenciar eventos e categorias, desenvolv
 
 1. Clone este repositório:
    ```bash
-   git clone <link-do-repositorio>
+   git clone https://github.com/Guiiima/CalendarioAndroid.git
