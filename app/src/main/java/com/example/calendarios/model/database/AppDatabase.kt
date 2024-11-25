@@ -7,19 +7,16 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.calendarios.model.dao.CategoriaDAO
 import com.example.calendarios.model.dao.EventoDAO
-import com.example.calendarios.model.dao.LembreteDAO
 import com.example.calendarios.model.entity.Categoria
 import com.example.calendarios.model.entity.Evento
-import com.example.calendarios.model.entity.Lembrete
 
 @Database(
-    entities = [Evento::class, Categoria::class, Lembrete::class],
+    entities = [Evento::class, Categoria::class],
     version = 5,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun eventoDao() : EventoDAO
     abstract fun categoriaDao() : CategoriaDAO
-    abstract fun lembreteDao(): LembreteDAO
 
     companion object {
         @Volatile

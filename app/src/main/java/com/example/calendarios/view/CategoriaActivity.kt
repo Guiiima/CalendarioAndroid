@@ -23,7 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
@@ -125,20 +124,20 @@ fun CategoriasListScreen(onAddEvent: () -> Unit, categoriaViewModel: CategoriaVi
         ) {
             items(listaCategorias) { categoria ->
                 Row(
-                    verticalAlignment = Alignment.CenterVertically, // Alinha os itens verticalmente no centro
-                    horizontalArrangement = Arrangement.Start, // Alinha os itens à esquerda
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 5.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(1.dp, 40.dp) // Ajuste o tamanho da linha
+                            .size(1.dp, 40.dp)
                             .background(
                                 Color(categoria.cor)
                             )
                     )
-                    Spacer(modifier = Modifier.width(16.dp)) // Ajusta o espaçamento entre a linha e o texto
+                    Spacer(modifier = Modifier.width(16.dp))
                     Text(
                         text = categoria.nome,
                         color = textColor
@@ -189,10 +188,10 @@ fun CadastroCategoriaScreen(
     categoriaViewModel: CategoriaViewModel,
     navController: NavController,
 ) {
-    val backgroundColor = Color(0xFF1C1C1C)  // Cor de fundo
-    val primaryColor = Color(0xFF3498DB)  // Cor principal (botões e ícones)
-    val textColor = Color.White  // Cor do texto
-    val fieldBackgroundColor = Color(0xFF2C3E50)  // Cor de fundo dos campos
+    val backgroundColor = Color(0xFF1C1C1C)
+    val primaryColor = Color(0xFF3498DB)
+    val textColor = Color.White
+    val fieldBackgroundColor = Color(0xFF2C3E50)
 
     var nomeCategoria by remember { mutableStateOf("") }
     var corSelecionada by remember { mutableStateOf(Color.Green) }

@@ -2,7 +2,6 @@ package com.example.calendarios.view
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -26,14 +25,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -60,10 +56,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -79,8 +73,6 @@ import com.example.calendarios.viewmodel.CategoriaViewModel
 import com.example.calendarios.viewmodel.CategoriaViewModelFactory
 import com.example.calendarios.viewmodel.EventoViewModel
 import com.example.calendarios.viewmodel.EventoViewModelFactory
-import kotlinx.coroutines.delay
-import java.time.Clock
 import java.time.LocalDate
 import java.time.Month
 import java.time.ZoneOffset
@@ -230,66 +222,6 @@ fun YearHeader(currentYear: Int, onDirectionChange: (Direction) -> Unit) {
         }
     }
 }
-
-@Composable
-fun IconButtonWithDropdown() {
-    val context = LocalContext.current
-    var expanded by remember { mutableStateOf(false) } // Controla se o menu está visível
-    val options = listOf("Cadastrar Categoria") // Opções do menu
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        FloatingActionButton(
-            onClick = { expanded = true },
-            shape = MaterialTheme.shapes.large,
-            containerColor = Color(0xFF5A9BD5).copy(alpha = 0.8f), // Azul mais suave
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(
-                    start = 16.dp,
-                    end = 32.dp,
-                    bottom = 32.dp
-                ) // Padding adicional à direita e embaixo
-                .size(50.dp)
-                .zIndex(1f)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Menu,
-                contentDescription = "Categorias",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp) // Tamanho do ícone
-            )
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            offset = DpOffset(x = (-16).dp, y = 8.dp),
-            modifier = Modifier.background(Color(0xFF3498DB).copy(alpha = 0.6f))
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    onClick = {
-                        expanded = false
-                        if (option == "Cadastrar Categoria") {
-                            val intent = Intent(context, CategoriaActivity::class.java)
-                            context.startActivity(intent)
-                        }
-                    },
-                    text = {
-                        Text(
-                            text = option,
-                            color = Color.Black,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                )
-            }
-        }
-    }
-}
-
 
 @Composable
 fun CalendarMonthView(month: Month, year: Int, onDateSelected: (LocalDate) -> Unit) {
@@ -612,7 +544,7 @@ fun AddEventScreen(
 
             OutlinedTextField(
                 value = categoria?.nome?.takeIf { it.isNotEmpty() }
-                    ?: "Categoria não definida",  // Verifica se categoria é null ou nome está vazio
+                    ?: "Categoria não definida",
                 onValueChange = {
                     categoria?.nome = it
                 },
@@ -662,18 +594,18 @@ fun AddEventScreen(
                             },
                             text = {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically, // Alinha os itens verticalmente no centro
-                                    horizontalArrangement = Arrangement.Start, // Alinha os itens à esquerda
-                                    modifier = Modifier.fillMaxWidth() // Preenche a largura do item
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Start,
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(1.dp, 40.dp) // Ajuste o tamanho da linha
+                                            .size(1.dp, 40.dp)
                                             .background(
                                                 Color(categoriaOption.cor)
                                             )
                                     )
-                                    Spacer(modifier = Modifier.width(16.dp)) // Ajusta o espaçamento entre a linha e o texto
+                                    Spacer(modifier = Modifier.width(16.dp))
                                     Text(
                                         text = categoriaOption.nome,
                                         color = textColor
@@ -787,7 +719,64 @@ fun EventoView(evento: Evento, eventoViewModel: EventoViewModel, navController: 
         }
     }
 }
+@Composable
+fun IconButtonWithDropdown() {
+    val context = LocalContext.current
+    var expanded by remember { mutableStateOf(false) }
+    val options = listOf("Cadastrar Categoria")
 
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        FloatingActionButton(
+            onClick = { expanded = true },
+            shape = MaterialTheme.shapes.large,
+            containerColor = Color(0xFF5A9BD5).copy(alpha = 0.8f),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(
+                    start = 16.dp,
+                    end = 32.dp,
+                    bottom = 32.dp
+                )
+                .size(50.dp)
+                .zIndex(1f)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Menu,
+                contentDescription = "Categorias",
+                tint = Color.White,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            offset = DpOffset(x = (-16).dp, y = 8.dp),
+            modifier = Modifier.background(Color(0xFF3498DB).copy(alpha = 0.6f))
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    onClick = {
+                        expanded = false
+                        if (option == "Cadastrar Categoria") {
+                            val intent = Intent(context, CategoriaActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                    },
+                    text = {
+                        Text(
+                            text = option,
+                            color = Color.Black,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
 enum class Direction {
     FORWARD, BACKWARD
 }
