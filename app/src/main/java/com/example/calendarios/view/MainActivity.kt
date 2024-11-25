@@ -723,7 +723,7 @@ fun EventoView(evento: Evento, eventoViewModel: EventoViewModel, navController: 
 fun IconButtonWithDropdown() {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
-    val options = listOf("Cadastrar Categoria")
+    val options = listOf("Cadastrar Categoria", "Pesquisar Evento")
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -762,6 +762,10 @@ fun IconButtonWithDropdown() {
                         expanded = false
                         if (option == "Cadastrar Categoria") {
                             val intent = Intent(context, CategoriaActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                        if (option == "Pesquisar Evento") {
+                            val intent = Intent(context, PesquisaActivity::class.java)
                             context.startActivity(intent)
                         }
                     },

@@ -12,7 +12,7 @@ import com.example.calendarios.model.entity.Evento
 
 @Database(
     entities = [Evento::class, Categoria::class],
-    version = 5,
+    version = 6,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun eventoDao() : EventoDAO

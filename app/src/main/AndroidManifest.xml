@@ -28,6 +28,11 @@
             android:label="Categorias"
             android:theme="@style/Theme.Calendarios">
         </activity>
+        <activity android:name=".view.PesquisaActivity"
+            android:exported="true"
+            android:label="Pesquisa"
+            android:theme="@style/Theme.Calendarios">
+        </activity>
     </application>
 
 </manifest>
