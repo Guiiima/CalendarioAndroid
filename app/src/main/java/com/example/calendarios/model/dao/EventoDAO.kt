@@ -21,6 +21,11 @@ interface EventoDAO {
     @Query("SELECT * FROM evento WHERE id = :id")
     suspend fun buscarPorId(id: Int): Evento
 
+    @Query(
+        "SELECT * FROM evento WHERE evento.nome LIKE '%' || :texto || '%' ORDER BY data ASC"
+    )
+    suspend fun buscarPorNome(texto: String): List<Evento>
+
     @Update
     suspend fun atualizar(evento: Evento)
 

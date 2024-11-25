@@ -406,10 +406,6 @@ fun AddEventScreen(
     var categoriaId: Int = 0
     var isInitialized by remember { mutableStateOf(false) }
 
-    if (!isInitialized) {
-
-    }
-
     var categorias by categoriaViewModel.listaCategorias
     categoriaViewModel.buscarTodasCategorias()
 

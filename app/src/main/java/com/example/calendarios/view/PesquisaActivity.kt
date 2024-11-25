@@ -3,6 +3,7 @@ package com.example.calendarios.view
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -16,32 +17,42 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.calendarios.model.database.AppDatabase
+import com.example.calendarios.viewmodel.EventoViewModel
+import com.example.calendarios.viewmodel.EventoViewModelFactory
 import java.text.SimpleDateFormat
 import java.util.*
 
 class PesquisaActivity : ComponentActivity() {
+    private val eventoViewModel: EventoViewModel by viewModels {
+        val dao = AppDatabase.getDatabase(applicationContext).eventoDao()
+        EventoViewModelFactory(dao)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            PesquisaScreen()
+            PesquisaScreen(eventoViewModel)
         }
     }
 }
 
 @Composable
-fun PesquisaScreen() {
+fun PesquisaScreen(eventoViewModel: EventoViewModel) {
     var searchText by remember { mutableStateOf(TextFieldValue("")) }
-    val eventos = listOf(
-        Pair("Reunião com equipe", "2024-11-25"), // Data exemplo: Hoje
-        Pair("Consulta médica", "2024-11-26"),
-        Pair("Aniversário de João", "2024-11-27"),
-        Pair("Treinamento de segurança", "2024-11-25"), // Data exemplo: Hoje
-        Pair("Jantar com amigos", "2024-11-28"),
-        Pair("Aula de dança", "2024-11-29")
-    )
+    val eventos by eventoViewModel.listaEventos
+//    val eventos = listOf(
+//        Pair("Reunião com equipe", "2024-11-25"), // Data exemplo: Hoje
+//        Pair("Consulta médica", "2024-11-26"),
+//        Pair("Aniversário de João", "2024-11-27"),
+//        Pair("Treinamento de segurança", "2024-11-25"), // Data exemplo: Hoje
+//        Pair("Jantar com amigos", "2024-11-28"),
+//        Pair("Aula de dança", "2024-11-29")
+//    )
+//
+//    val filteredEventos = eventos.filter { it.first.contains(searchText.text, ignoreCase = true) }
 
-    val filteredEventos = eventos.filter { it.first.contains(searchText.text, ignoreCase = true) }
-
+    eventoViewModel.buscarPorNome(searchText.text)
 
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
@@ -95,8 +106,8 @@ fun PesquisaScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(filteredEventos.size) { index ->
-                val (eventName, eventDate) = filteredEventos[index]
+            items(eventos.size) { index ->
+                val (eventName, eventDate) = eventos[index]
                 val isToday = eventDate == today
                 val containerColor = if (isToday) Color(0xFF3498DB) else Color(0xFF605E5E)
 

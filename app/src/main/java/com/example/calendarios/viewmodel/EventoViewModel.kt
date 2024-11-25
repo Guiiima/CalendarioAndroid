@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.calendarios.model.dao.EventoDAO
 import com.example.calendarios.model.entity.Categoria
 import com.example.calendarios.model.entity.Evento
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class EventoViewModel(private val eventoDAO: EventoDAO): ViewModel() {
@@ -29,20 +28,24 @@ class EventoViewModel(private val eventoDAO: EventoDAO): ViewModel() {
 
         viewModelScope.launch {
             eventoDAO.inserir(evento)
-            buscarEventos(data)  // Atualiza a lista de eventos
+            buscarEventos(data)
         }
 
         return "Evento Salvo com Sucesso!"
     }
 
-    // Função para buscar evento por ID (para edição)
     fun buscarEventoPorId(id: Int) {
         viewModelScope.launch {
             evento.value = eventoDAO.buscarPorId(id)
         }
     }
 
-    // Função para atualizar um evento existente
+    fun buscarPorNome(texto: String) {
+        viewModelScope.launch {
+            listaEventos.value = eventoDAO.buscarPorNome(texto)
+        }
+    }
+
     fun atualizarEvento(evento: Evento): String {
         if (evento.nome.isBlank()) {
             return "Preencha o nome do Evento!"
@@ -50,17 +53,16 @@ class EventoViewModel(private val eventoDAO: EventoDAO): ViewModel() {
 
         viewModelScope.launch {
             eventoDAO.atualizar(evento)
-            buscarEventos(evento.data)  // Atualiza a lista de eventos
+            buscarEventos(evento.data)
         }
 
         return "Evento Atualizado com Sucesso!"
     }
 
-    // Função para deletar um evento
     fun deletarEvento(evento: Evento) {
         viewModelScope.launch {
             eventoDAO.deletar(evento)
-            buscarEventos(evento.data)  // Atualiza a lista de eventos
+            buscarEventos(evento.data)
         }
     }
 }
